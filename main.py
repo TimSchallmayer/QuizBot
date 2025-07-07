@@ -34,15 +34,20 @@ async def duel(msg, user: dc.Member):
         ), color = 0x00D166)
         embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
-      #  interacted = False
-      #  async def button_accept_callback(interaction):
-        #    interacted = True
+        interacted = False
 
-       # async def button_reject_callback(interaction):
-      #      interacted = True
+        async def button_accept_callback(interaction):
+            nonlocal interacted
+            interacted = True
+
+
+
+        async def button_reject_callback(interaction):
+            nonlocal interacted
+            interacted = True
             
-     #   button_accept.callback = button_accept_callback()
-    #    button_reject.callback = button_reject_callback()
+        button_accept.callback = button_accept_callback
+        button_reject.callback = button_reject_callback
     
         view = dc.ui.View()
         view.add_item(button_accept)
