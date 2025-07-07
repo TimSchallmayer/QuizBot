@@ -23,18 +23,35 @@ async def duel(msg, user: dc.Member):
     await msg.send(f"HI{user.mention}")
     try:
         interacted = False
-        class view(dc.ui.View): 
+        class Myview(dc.ui.View): 
+
+            def __init__(self): super().__init__(timeout=120)
+
+            async def on_timeout(self):
+                await self.message.edit(embed=embed1, view=Myview())
+
             @dc.ui.Button(label="Akzeptieren", style = dc.ButtonStyle.green)
             async def button_accept_callback(self, button, interaction):
                 nonlocal interacted
                 interacted = True
+                button.disabled = True
                 await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!", ephemeral=True)
             
             @dc.ui.Button(label="Ablehnen", style = dc.ButtonStyle.red)
             async def button_reject_callback(self, button, interaction):
                 nonlocal interacted
                 interacted = True
+                button.disabled = True
                 await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!", ephemeral=True)
+        
+        embed1 = dc.Embed(title="📩 Quiz-Einladung",
+        description=(
+            f"Hey! {msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
+            "**Möchtest du an dem Quiz teilnehmen?** 🎉\n"
+            "Die Zeit ist abgelaufen. Sende eine neue Anfrage um ein Quiz zu starten!\n"
+        ), color = 0x00D166)
+        embed1.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
+
 
         embed = dc.Embed(title="📩 Quiz-Einladung",
         description=(
@@ -44,10 +61,7 @@ async def duel(msg, user: dc.Member):
         ), color = 0x00D166)
         embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
-        await user.send(embed=embed, view=view())
-        asyncio.wait(120)
-        if not interacted:
-            pass
+        await user.send(embed=embed, view=Myview())
 
     
     except:
