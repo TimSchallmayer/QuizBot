@@ -39,12 +39,14 @@ async def duel(msg, user: dc.Member):
         async def button_accept_callback(interaction):
             nonlocal interacted
             interacted = True
+            await interaction.ressponse.send_message("🎉 Du hast das Quiz akzeptiert!", ephemeral=True)
 
 
 
         async def button_reject_callback(interaction):
             nonlocal interacted
             interacted = True
+            await interaction.ressponse.send_message("❌Du hast das Quiz abgelehnt!", ephemeral=True)
             
         button_accept.callback = button_accept_callback
         button_reject.callback = button_reject_callback
