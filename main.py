@@ -25,22 +25,22 @@ async def duel(msg, user: dc.Member):
         interacted = False
         class Myview(dc.ui.View): 
 
-            def __init__(self): super().__init__(timeout=120)
+            def __init__(self): 
+                super().__init__(timeout=120)
+                self.interacted = True
 
             async def on_timeout(self):
                 await self.message.edit(embed=embed1, view=Myview())
 
-            @dc.ui.Button(label="Akzeptieren", style = dc.ButtonStyle.green)
+            @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
             async def button_accept_callback(self, button, interaction):
-                nonlocal interacted
-                interacted = True
+                self.interacted = True
                 button.disabled = True
                 await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!", ephemeral=True)
             
-            @dc.ui.Button(label="Ablehnen", style = dc.ButtonStyle.red)
+            @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
             async def button_reject_callback(self, button, interaction):
-                nonlocal interacted
-                interacted = True
+                self.interacted = True
                 button.disabled = True
                 await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!", ephemeral=True)
         
