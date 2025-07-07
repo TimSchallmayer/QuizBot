@@ -44,9 +44,10 @@ async def duel(msg, user: dc.Member):
         ), color = 0x00D166)
         embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
-        await user.send(embed=embed, view=view)
+        await user.send(embed=embed, view=view())
         asyncio.wait(120)
-        
+        if not interacted:
+            pass
 
     
     except:
