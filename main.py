@@ -27,30 +27,38 @@ async def duel(msg, user: dc.Member):
 
             def __init__(self): 
                 super().__init__(timeout=120)
-                self.interacted = True
+                self.interacted = False
+                self.message = None
 
             async def on_timeout(self):
-                await self.message.edit(embed=embed1, view=Myview())
+                self.disable_all_items
+                await self.message.edit(embed=embed_timeout, view=view)
 
             @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
             async def button_accept_callback(self, button, interaction):
+
                 self.interacted = True
-                button.disabled = True
+                self.disable_all_items
                 await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!", ephemeral=True)
+                await self.message.edit(view=self)
+                self.stop()
             
             @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
             async def button_reject_callback(self, button, interaction):
+
                 self.interacted = True
-                button.disabled = True
+                self.disable_all_items
                 await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!", ephemeral=True)
+                await self.message.edit(view=self)
+                self.stop()
         
-        embed1 = dc.Embed(title="📩 Quiz-Einladung",
+        embed_timeout = dc.Embed(title="📩 Quiz-Einladung",
         description=(
             f"Hey! {msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
             "**Möchtest du an dem Quiz teilnehmen?** 🎉\n"
             "Die Zeit ist abgelaufen. Sende eine neue Anfrage um ein Quiz zu starten!\n"
         ), color = 0x00D166)
-        embed1.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
+        embed_timeout.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
 
         embed = dc.Embed(title="📩 Quiz-Einladung",
@@ -61,7 +69,10 @@ async def duel(msg, user: dc.Member):
         ), color = 0x00D166)
         embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
-        await user.send(embed=embed, view=Myview())
+        view = Myview()
+        sent_message = await user.send(embed=embed, view=view)
+        view.message = sent_message
+        await view.wait()
 
     
     except:
