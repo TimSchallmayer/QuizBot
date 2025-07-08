@@ -20,8 +20,8 @@ bot = commands.Bot(command_prefix="/", intents=intents
 
 @bot.command()
 async def duel(msg, user: dc.Member):
-    await msg.send(f"HI{user.mention}")
     try:
+        await msg.send(f"Hi{user.mention}, die Anfrage wurde gesendet", ephemeral = True)
         class Myview(dc.ui.View): 
 
             def __init__(self): 
@@ -57,7 +57,7 @@ async def duel(msg, user: dc.Member):
             f"Hey! {msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
             "**Möchtest du an dem Quiz teilnehmen?** 🎉\n"
             "Du hast 2 Minuten Zeit, dich zu entscheiden.\n"
-        ), color = 0x0099E1)
+        ), color = 0x597E8D)
         embed_timeout.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
 
@@ -66,7 +66,7 @@ async def duel(msg, user: dc.Member):
             f"Hey! {msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
             "**Möchtest du an dem Quiz teilnehmen?** 🎉\n"
             "Du hast 2 Minuten Zeit, dich zu entscheiden.\n"
-        ), color = 0x597E8D9)
+        ), color = 0x0099E1)
         embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
         view = Myview()
@@ -78,26 +78,25 @@ async def duel(msg, user: dc.Member):
         view.message = sent_message
         await view.wait()
 
-    
     except:
         await msg.channel.send(f"{user.mention} konnte nicht gefunden werden")
 
 async def response(author: dc.Member, user: dc.Member, angenommen):
         
-        embed_accept = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
-        embed_accept.set_author(name=user.display_name, icon_url= user.avatar_url)
+        embed_reject = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
+        embed_reject.set_author(name=user.display_name, icon_url= user.avatar.url)
 
-        embed_reject = dc.Embed(title= "✅ Anfrage angenommen✅", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0x00D166)
-        embed_reject.set_author(name=user.display_name, icon_url = user.avatar_url)
+        embed_accept = dc.Embed(title= "✅ Anfrage angenommen✅", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0x00D166)
+        embed_accept.set_author(name=user.display_name, icon_url = user.avatar.url)
 
-        embed_timeout = dc.Embed(title = "🕒 Nicht auf Anfrage reagiert (Timeout) 🕒", description = (f"{user.mention} hat nicht auf die Anfrage reagiert (Timeout).\n" "Versuche die Anfrage neu zu senden oder den Nutzer anders zu erreichen\n"), color = 0x597E8D)
-        embed_timeout.set_author()
+        embed_timeout = dc.Embed(title = "🕒 Nicht auf Anfrage reagiert (Timeout) 🕒", description = (f"{user.mention} hat nicht auf die Anfrage reagiert (Timeout).\n" "Versuche die Anfrage erneut zu senden \noder den Nutzer anders zu erreichen\n"), color = 0x597E8D)
+        embed_timeout.set_author(name = user.display_name, icon_url = user.avatar.url)
 
         if angenommen == 0:
-            await author.send(f"{user.mention} hat die Anfrage angenommen.")   
+            await author.send(embed = embed_accept)   
         elif angenommen == 1: 
-            await author.send(f"{user.mention} hat die Anfrage abgelehnt.")  
+            await author.send(embed = embed_reject)  
         else:
-            await author.send(f"{user.mention} hat nicht auf die Anfrage reagiert (Timeout).")  
+            await author.send(embed = embed_timeout)  
 
 bot.run(Token)
