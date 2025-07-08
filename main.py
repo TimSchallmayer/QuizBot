@@ -83,6 +83,15 @@ async def duel(msg, user: dc.Member):
         await msg.channel.send(f"{user.mention} konnte nicht gefunden werden")
 
 async def response(author: dc.Member, user: dc.Member, angenommen):
+        
+        embed_accept = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = f"{user.mention} hat die Anfrage abgelehnt.\n", color = 0xF93A2F)
+        embed_accept.set_author(name=user.display_name, icon_url= user.avatar_url)
+
+        embed_reject = dc.Embed(title= "✅ Anfrage angenommen✅", description = f"{user.mention} hat die Anfrage abgelehnt.\n", color = 0x00D166)
+        embed_reject.set_author(name=user.display_name, icon_url = user.avatar_url)
+
+        embed_timeout = dc.Embed(title = "🕒 Nicht auf Anfrage reagiert (Timeout) 🕒", description = f"{user.mention} hat nicht auf die Anfrage reagiert (Timeout).\n")
+
         if angenommen == 0:
             await author.send(f"{user.mention} hat die Anfrage angenommen.")   
         elif angenommen == 1: 
