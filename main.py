@@ -75,7 +75,7 @@ async def duel(msg, user: dc.Member):
         await msg.channel.send(f"{user.mention} konnte nicht gefunden werden")
 
 async def response(author: dc.Member, user: dc.Member):
-
-    await author.send(f"{user.mention}")
+    
+        await author.send(f"{user.mention}")   
 
 bot.run(Token)
