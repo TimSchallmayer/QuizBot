@@ -30,8 +30,9 @@ async def duel(msg, user: dc.Member):
 
             async def on_timeout(self):
                 self.disable_all_items()
-                await self.message.edit(embed=embed_timeout, view=self)
-                response(msg.author, user, 2)
+                await self.message.edit(embed=embed_timeout, view = self)
+                await user.send("🕒 Die Zeit ist abgelaufen, falls du doch spielen willst schicke eine neue Anfrage!")
+                await response(msg.author, user, 2)
 
             @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
             async def button_accept_callback(self, button, interaction):
@@ -39,7 +40,7 @@ async def duel(msg, user: dc.Member):
                 self.disable_all_items()
                 await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!", ephemeral=True)
                 await self.message.edit(view=self)
-                response(msg.author, user, 0)
+                await response(msg.author, user, 0)
                 self.stop()
             
             @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
@@ -48,14 +49,14 @@ async def duel(msg, user: dc.Member):
                 self.disable_all_items()
                 await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!", ephemeral=True)
                 await self.message.edit(view=self)
-                response(msg.author, user, 1)
+                await response(msg.author, user, 1)
                 self.stop()
         
         embed_timeout = dc.Embed(title="📩 Quiz-Einladung",
         description=(
             f"Hey! {msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
             "**Möchtest du an dem Quiz teilnehmen?** 🎉\n"
-            "Die Zeit ist abgelaufen. Sende eine neue Anfrage um ein Quiz zu starten!\n"
+            "Du hast 2 Minuten Zeit, dich zu entscheiden.\n"
         ), color = 0x00D166)
         embed_timeout.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
