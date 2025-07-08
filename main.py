@@ -1,11 +1,11 @@
-import discord as dc
-from discord.ext import commands
-from discord.ui import Button
-import requests
+import discord as dc # type: ignore
+from discord.ext import commands # type: ignore
+from discord.ui import Button # type: ignore
+import requests # type: ignore
 import json
 import time
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 import asyncio
 
 load_dotenv()
