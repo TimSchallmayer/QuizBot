@@ -31,14 +31,14 @@ async def duel(msg, user: dc.Member):
                 self.message = None
 
             async def on_timeout(self):
-                self.disable_all_items
-                await self.message.edit(embed=embed_timeout, view=view)
+                self.disable_all_items()
+                await self.message.edit(embed=embed_timeout, view=self)
 
             @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
             async def button_accept_callback(self, button, interaction):
 
                 self.interacted = True
-                self.disable_all_items
+                self.disable_all_items()
                 await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!", ephemeral=True)
                 await self.message.edit(view=self)
                 self.stop()
@@ -47,7 +47,7 @@ async def duel(msg, user: dc.Member):
             async def button_reject_callback(self, button, interaction):
 
                 self.interacted = True
-                self.disable_all_items
+                self.disable_all_items()
                 await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!", ephemeral=True)
                 await self.message.edit(view=self)
                 self.stop()
