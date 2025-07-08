@@ -21,7 +21,7 @@ bot = commands.Bot(command_prefix="/", intents=intents
 @bot.command()
 async def duel(msg, user: dc.Member):
     try:
-        await msg.send(f"Hi{user.mention}, die Anfrage wurde gesendet", ephemeral = True)
+        await msg.reply(f"Hi{user.mention}, die Anfrage wurde gesendet")
         class Myview(dc.ui.View): 
 
             def __init__(self): 
@@ -30,7 +30,7 @@ async def duel(msg, user: dc.Member):
 
             async def on_timeout(self):
                 self.disable_all_items()
-                await self.message.edit(embed=embed_timeout, view = self)
+                await self.message.edit(embed=embed, view = self)
                 await user.send("🕒 Die Zeit ist abgelaufen, falls du doch spielen willst schicke eine neue Anfrage!")
                 await response(msg.author, user, 2)
 
