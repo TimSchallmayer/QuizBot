@@ -74,8 +74,12 @@ async def duel(msg, user: dc.Member):
     except:
         await msg.channel.send(f"{user.mention} konnte nicht gefunden werden")
 
-async def response(author: dc.Member, user: dc.Member):
-    
-        await author.send(f"{user.mention}")   
+async def response(author: dc.Member, user: dc.Member, angenommen):
+        if angenommen == 0:
+            await author.send(f"{user.mention} hat die Anfrage angenommen.")   
+        elif angenommen == 1: 
+            await author.send(f"{user.mention} hat die Anfrage abgelehnt.")  
+        else:
+            await author.send(f"{user.mention} hat nicht auf die Anfrage reagiert (Timeout).")  
 
 bot.run(Token)
