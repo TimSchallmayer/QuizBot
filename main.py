@@ -31,6 +31,7 @@ async def duel(msg, user: dc.Member):
             async def on_timeout(self):
                 self.disable_all_items()
                 await self.message.edit(embed=embed_timeout, view=self)
+                response(msg.author, user, 2)
 
             @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
             async def button_accept_callback(self, button, interaction):
@@ -38,6 +39,7 @@ async def duel(msg, user: dc.Member):
                 self.disable_all_items()
                 await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!", ephemeral=True)
                 await self.message.edit(view=self)
+                response(msg.author, user, 0)
                 self.stop()
             
             @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
@@ -46,6 +48,7 @@ async def duel(msg, user: dc.Member):
                 self.disable_all_items()
                 await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!", ephemeral=True)
                 await self.message.edit(view=self)
+                response(msg.author, user, 1)
                 self.stop()
         
         embed_timeout = dc.Embed(title="📩 Quiz-Einladung",
@@ -66,7 +69,11 @@ async def duel(msg, user: dc.Member):
         embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
         view = Myview()
-        sent_message = await user.send(embed=embed, view=view)
+        try:
+            sent_message = await user.send(embed=embed, view=view)
+        except dc.Forbidden:
+            msg.author.send("Der Nutzer ist nicht erreichbar, da er vermutlich keine Dms akzeptiert.")
+            return
         view.message = sent_message
         await view.wait()
 
