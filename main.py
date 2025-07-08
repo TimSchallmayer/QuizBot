@@ -22,12 +22,10 @@ bot = commands.Bot(command_prefix="/", intents=intents
 async def duel(msg, user: dc.Member):
     await msg.send(f"HI{user.mention}")
     try:
-        interacted = False
         class Myview(dc.ui.View): 
 
             def __init__(self): 
                 super().__init__(timeout=120)
-                self.interacted = False
                 self.message = None
 
             async def on_timeout(self):
@@ -36,8 +34,7 @@ async def duel(msg, user: dc.Member):
 
             @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
             async def button_accept_callback(self, button, interaction):
-
-                self.interacted = True
+                
                 self.disable_all_items()
                 await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!", ephemeral=True)
                 await self.message.edit(view=self)
@@ -46,7 +43,6 @@ async def duel(msg, user: dc.Member):
             @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
             async def button_reject_callback(self, button, interaction):
 
-                self.interacted = True
                 self.disable_all_items()
                 await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!", ephemeral=True)
                 await self.message.edit(view=self)
