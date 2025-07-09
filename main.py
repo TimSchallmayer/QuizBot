@@ -8,10 +8,14 @@ import os
 from dotenv import load_dotenv # type: ignore
 import asyncio
 
+
+invitelink = None
+inviteguild = None
+
 load_dotenv()
 Token = os.getenv("DISCORD_BOT_TOKEN")
 
-intents = dc.Intents.default()
+intents = dc.Intents.all()
 intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix="/", intents=intents
@@ -20,6 +24,7 @@ bot = commands.Bot(command_prefix="/", intents=intents
 
 @bot.command()
 async def duel(msg, user: dc.Member):
+    global inviteguild
 
     embed_reply_first = dc.Embed(title = "Anfrage wurde verschickt", description = f"Eine Quiz Anfrage wurde an {user.mention} gesendet.\n", color = 0x00D166)
     embed_reply_first.set_author(name = user.display_name, icon_url = user.avatar.url)
@@ -68,7 +73,6 @@ async def duel(msg, user: dc.Member):
         ), color = 0x597E8D)
         embed_timeout.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
-
         embed = dc.Embed(title="📩 Quiz-Einladung",
         description=(
             f"Hey! {msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
@@ -84,12 +88,15 @@ async def duel(msg, user: dc.Member):
             msg.author.send("Der Nutzer ist nicht erreichbar, da er vermutlich keine Dms akzeptiert.")
             return
         view.message = sent_message
+        inviteguild = msg.channel.guild
         await view.wait()
 
     except dc.Forbidden:
         await msg.author.send(embed = embed_reply_secod)
 
 async def response(author: dc.Member, user: dc.Member, angenommen):
+        global invitelink
+        global inviteguild
         
         embed_reject = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
         embed_reject.set_author(name=user.display_name, icon_url= user.avatar.url)
@@ -101,10 +108,18 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
         embed_timeout.set_author(name = user.display_name, icon_url = user.avatar.url)
 
         if angenommen == 0:
-            await author.send(embed = embed_accept)   
+            await author.send(embed = embed_accept)
+            create_quiz_channel()   
+            await author.send(invitelink)
         elif angenommen == 1: 
             await author.send(embed = embed_reject)  
         else:
             await author.send(embed = embed_timeout)  
+
+async def create_quiz_channel(guild : dc.channel.Guild, user : dc.Member, author : dc.Member):
+    global invitelink
+
+    channel = await guild.create_text_channel(f" Quiz Kanal für: {user.mention} und {author.mention}")
+    invitelink = await channel.create_invite(max_uses = 2, unique = True)
 
 bot.run(Token)
