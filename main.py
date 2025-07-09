@@ -24,7 +24,8 @@ async def duel(msg, user: dc.Member):
     embed_reply_first = dc.Embed(title = "Anfrage wurde verschickt", description = f"Eine Quiz Anfrage wurde an {user.mention} gesendet.\n", color = 0x00D166)
     embed_reply_first.set_author(name = user.display_name, icon_url = user.avatar.url)
 
-    embed_reply_secon = dc.Embed(title = "Anfrage wurde nicht zugestellt", description = f"{user.mention} konnte nicht gefunden werden oder akzeptiert keien Dms.", color = 0xF93A2F)
+    embed_reply_secod = dc.Embed(title = "Anfrage wurde nicht zugestellt", description = f"{user.mention} konnte nicht gefunden werden oder akzeptiert keien Dms.", color = 0xF93A2F)
+    embed_reply_secod.set_author(name = user.display_name, icon_url = user.avatar.url)
     
     
     try:
