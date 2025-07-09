@@ -20,8 +20,14 @@ bot = commands.Bot(command_prefix="/", intents=intents
 
 @bot.command()
 async def duel(msg, user: dc.Member):
+
+    embed_reply_first = dc.Embed(title = "Anfrage wurde verschickt", description = f"Eine Quiz Anfrage wurde an {user.mention} gesendet.\n", color = 0x0099E1)
+    embed_reply_first.set_author(name = user.display_name, icon_url = user.avatar.url)
+
+    
+    
     try:
-        await msg.reply(f"Hi{user.mention}, die Anfrage wurde gesendet")
+        await msg.reply(f"Hi{user.mention}, die Anfrage wurde gesendet", ephemeral = True)
         class Myview(dc.ui.View): 
 
             def __init__(self): 
@@ -78,8 +84,8 @@ async def duel(msg, user: dc.Member):
         view.message = sent_message
         await view.wait()
 
-    except:
-        await msg.channel.send(f"{user.mention} konnte nicht gefunden werden")
+    except dc.Forbidden:
+        await msg.channel.send(f"{user.mention} konnte nicht gefunden werden oder akzeptiert keine DMs.")
 
 async def response(author: dc.Member, user: dc.Member, angenommen):
         
