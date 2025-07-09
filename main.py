@@ -29,7 +29,7 @@ async def duel(msg, user: dc.Member):
     
     
     try:
-        await msg.reply(f"Hi{user.mention}, die Anfrage wurde gesendet", ephemeral = True)
+        await msg.author.send(embed = embed_reply_first)
         class Myview(dc.ui.View): 
 
             def __init__(self): 
@@ -39,7 +39,7 @@ async def duel(msg, user: dc.Member):
             async def on_timeout(self):
                 self.disable_all_items()
                 await self.message.edit(embed=embed, view = self)
-                await user.send("🕒 Die Zeit ist abgelaufen, falls du doch spielen willst schicke eine neue Anfrage!")
+                await user.send(f"🕒 Die Zeit ist abgelaufen {user.mention}, falls du doch spielen willst schicke eine neue Anfrage!")
                 await response(msg.author, user, 2)
 
             @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
@@ -87,14 +87,14 @@ async def duel(msg, user: dc.Member):
         await view.wait()
 
     except dc.Forbidden:
-        await msg.reply(f"{user.mention} konnte nicht gefunden werden oder akzeptiert keine DMs.")
+        await msg.author.send(embed = embed_reply_secod)
 
 async def response(author: dc.Member, user: dc.Member, angenommen):
         
         embed_reject = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
         embed_reject.set_author(name=user.display_name, icon_url= user.avatar.url)
 
-        embed_accept = dc.Embed(title= "✅ Anfrage angenommen✅", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0x00D166)
+        embed_accept = dc.Embed(title= "✅ Anfrage angenommen ✅", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0x00D166)
         embed_accept.set_author(name=user.display_name, icon_url = user.avatar.url)
 
         embed_timeout = dc.Embed(title = "🕒 Nicht auf Anfrage reagiert (Timeout) 🕒", description = (f"{user.mention} hat nicht auf die Anfrage reagiert (Timeout).\n" "Versuche die Anfrage erneut zu senden \noder den Nutzer anders zu erreichen\n"), color = 0x597E8D)
