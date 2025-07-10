@@ -44,14 +44,14 @@ async def duel(msg, user: dc.Member):
             async def on_timeout(self):
                 self.disable_all_items()
                 await self.message.edit(embed=embed, view = self)
-                await user.send(f"🕒 Die Zeit ist abgelaufen {user.mention}, falls du doch spielen willst schicke eine neue Anfrage!")
+                await user.send(f"🕒 Die Zeit ist abgelaufen {user.mention}, falls du doch spielen willst schicke eine neue Anfrage!", reference = sent_message)
                 await response(msg.author, user, 2)
 
             @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
             async def button_accept_callback(self, button, interaction):
                 
                 self.disable_all_items()
-                await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!", ephemeral=True)
+                await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!")
                 await self.message.edit(view=self)
                 await response(msg.author, user, 0)
                 self.stop()
@@ -60,7 +60,7 @@ async def duel(msg, user: dc.Member):
             async def button_reject_callback(self, button, interaction):
 
                 self.disable_all_items()
-                await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!", ephemeral=True)
+                await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!")
                 await self.message.edit(view=self)
                 await response(msg.author, user, 1)
                 self.stop()
@@ -101,25 +101,29 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
         embed_reject = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
         embed_reject.set_author(name=user.display_name, icon_url= user.avatar.url)
 
-        embed_accept = dc.Embed(title= "✅ Anfrage angenommen ✅", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0x00D166)
+        embed_accept = dc.Embed(title= "✅ Anfrage angenommen ✅", description = (f"{user.mention} hat die Anfrage angenommen.\n"), color = 0x00D166)
         embed_accept.set_author(name=user.display_name, icon_url = user.avatar.url)
 
         embed_timeout = dc.Embed(title = "🕒 Nicht auf Anfrage reagiert (Timeout) 🕒", description = (f"{user.mention} hat nicht auf die Anfrage reagiert (Timeout).\n" "Versuche die Anfrage erneut zu senden \noder den Nutzer anders zu erreichen\n"), color = 0x597E8D)
         embed_timeout.set_author(name = user.display_name, icon_url = user.avatar.url)
 
+        
+
         if angenommen == 0:
             await author.send(embed = embed_accept)
-            create_quiz_channel()   
-            await author.send(invitelink)
+            await create_quiz_channel(inviteguild, user, author) 
+            embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"{invitelink}\n", color = 0x0099E1)  
+            await author.send(embed =embed_invite)
+            await user.send(embed =embed_invite)
         elif angenommen == 1: 
             await author.send(embed = embed_reject)  
         else:
             await author.send(embed = embed_timeout)  
 
-async def create_quiz_channel(guild : dc.channel.Guild, user : dc.Member, author : dc.Member):
+async def create_quiz_channel(guild : dc.Guild, user : dc.Member, author : dc.Member):
     global invitelink
 
-    channel = await guild.create_text_channel(f" Quiz Kanal für: {user.mention} und {author.mention}")
+    channel = await guild.create_text_channel(f" Quiz Kanal {user.mention}{author.mention}")
     invitelink = await channel.create_invite(max_uses = 2, unique = True)
 
 bot.run(Token)
