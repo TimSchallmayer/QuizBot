@@ -1,12 +1,20 @@
 import discord as dc # type: ignore
 from discord.ext import commands # type: ignore
 from discord.ui import Button # type: ignore
-import requests # type: ignore
-import json
-import time
 import os
 from dotenv import load_dotenv # type: ignore
 import asyncio
+import mysql.connector # type: ignore
+
+
+db = mysql.connector.connect(
+    host = "localhost",
+    user = "root",
+    password = "2606009",
+    database = "sys"
+)
+
+cursor = db.cursor()
 
 
 invitelink = None
