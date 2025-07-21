@@ -21,57 +21,62 @@ intents.members = True
 bot = commands.Bot(command_prefix="/", intents=intents
 )
 
+class Myview(dc.ui.View): 
 
-@bot.command()
-async def duel(msg, user: dc.Member):
-    global inviteguild
+    def __init__(self, msg, user: dc.Member): 
+        super().__init__(timeout=120)
+        self.message = None
+        self.msg = msg
+        self.user = user
 
-    embed_reply_first = dc.Embed(title = "Anfrage wurde verschickt", description = f"Eine Quiz Anfrage wurde an {user.mention} gesendet.\n", color = 0x00D166)
-    embed_reply_first.set_author(name = user.display_name, icon_url = user.avatar.url)
-
-    embed_reply_secod = dc.Embed(title = "Anfrage wurde nicht zugestellt", description = f"{user.mention} konnte nicht gefunden werden oder akzeptiert keien Dms.", color = 0xF93A2F)
-    embed_reply_secod.set_author(name = user.display_name, icon_url = user.avatar.url)
-    
-    
-    try:
-        await msg.author.send(embed = embed_reply_first)
-        class Myview(dc.ui.View): 
-
-            def __init__(self): 
-                super().__init__(timeout=120)
-                self.message = None
-
-            async def on_timeout(self):
-                self.disable_all_items()
-                await self.message.edit(embed=embed, view = self)
-                await user.send(f"🕒 Die Zeit ist abgelaufen {user.mention}, falls du doch spielen willst schicke eine neue Anfrage!", reference = sent_message)
-                await response(msg.author, user, 2)
-
-            @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
-            async def button_accept_callback(self, button, interaction):
-                
-                self.disable_all_items()
-                await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!")
-                await self.message.edit(view=self)
-                await response(msg.author, user, 0)
-                self.stop()
-            
-            @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
-            async def button_reject_callback(self, button, interaction):
-
-                self.disable_all_items()
-                await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!")
-                await self.message.edit(view=self)
-                await response(msg.author, user, 1)
-                self.stop()
-        
+    async def on_timeout(self):
+        self.disable_all_items()
         embed_timeout = dc.Embed(title="📩 Quiz-Einladung",
         description=(
-            f"Hey! {msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
+            f"Hey! {self.msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
             "**Möchtest du an dem Quiz teilnehmen?** 🎉\n"
             "Du hast 2 Minuten Zeit, dich zu entscheiden.\n"
         ), color = 0x597E8D)
-        embed_timeout.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
+        embed_timeout.set_author(name=self.msg.author.display_name, icon_url=self.msg.author.avatar.url)
+        await self.message.edit(embed=embed_timeout, view = self)
+        await self.user.send(f"🕒 Die Zeit ist abgelaufen {self.user.mention}, falls du doch spielen willst schicke eine neue Anfrage!", reference = self.message)
+        await response(self.msg.author, self.user, 2)
+        
+
+    @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
+    async def button_accept_callback(self, button, interaction):
+        
+        self.disable_all_items()
+        await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!")
+        await self.message.edit(view=self)
+        await response(interaction.author, interaction.user, 0)
+        self.stop()
+    
+    @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
+    async def button_reject_callback(self, button, interaction):
+
+        self.disable_all_items()
+        await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!")
+        await self.message.edit(view=self)
+        await response(interaction.author, interaction.user, 1)
+        self.stop()
+
+@bot.slash_command()
+async def duel(msg, user: dc.Member):
+    global inviteguild
+
+    embed_succesfull = dc.Embed(title = "Anfrage wurde verschickt", description = f"Eine Quiz Anfrage wurde an {user.mention} gesendet.\n", color = 0x00D166)
+    embed_succesfull.set_author(name = user.display_name, icon_url = user.avatar.url)
+
+    embed_error = dc.Embed(title = "Anfrage wurde nicht zugestellt", description = f"{user.mention} konnte nicht gefunden werden oder akzeptiert keien Dms.", color = 0xF93A2F)
+    embed_error.set_author(name = user.display_name, icon_url = user.avatar.url)
+    
+    
+    try:
+        # await msg.author.send(embed = embed_succesfull)
+        await msg.response.send_message(embed = embed_succesfull, ephemeral=True)
+        
+        
 
         embed = dc.Embed(title="📩 Quiz-Einladung",
         description=(
@@ -81,7 +86,7 @@ async def duel(msg, user: dc.Member):
         ), color = 0x0099E1)
         embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
-        view = Myview()
+        view = Myview(msg, user)
         try:
             sent_message = await user.send(embed=embed, view=view)
         except dc.Forbidden:
@@ -92,9 +97,9 @@ async def duel(msg, user: dc.Member):
         await view.wait()
 
     except dc.Forbidden:
-        await msg.author.send(embed = embed_reply_secod)
+        await msg.author.send(embed = embed_error)
 
-async def response(author: dc.Member, user: dc.Member, angenommen):
+async def response(author: dc.Member, user: dc.Member, angenommen): 
         global invitelink
         global inviteguild
         
