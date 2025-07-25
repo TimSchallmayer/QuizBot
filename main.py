@@ -29,7 +29,7 @@ intents.members = True
 bot = commands.Bot(command_prefix="/", intents=intents
 )
 
-class Myview(dc.ui.View): 
+class Anfrage_View(dc.ui.View): 
 
     def __init__(self, msg, user: dc.Member): 
         super().__init__(timeout=120)
@@ -69,6 +69,14 @@ class Myview(dc.ui.View):
         await response(interaction.author, interaction.user, 1)
         self.stop()
 
+class Auswahl_View(dc.ui.View):
+    def __init__(self, user: dc.Member):
+        self.user = user
+    
+    @dc.ui.dro
+
+
+
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
     global inviteguild
@@ -94,7 +102,7 @@ async def duel(msg, user: dc.Member):
         ), color = 0x0099E1)
         embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
-        view = Myview(msg, user)
+        view = Anfrage_View(msg, user)
         try:
             sent_message = await user.send(embed=embed, view=view)
         except dc.Forbidden:
