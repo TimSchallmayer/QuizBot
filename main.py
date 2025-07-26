@@ -73,7 +73,44 @@ class Auswahl_View(dc.ui.View):
     def __init__(self, user: dc.Member):
         self.user = user
     
-    @dc.ui.dro
+
+
+class Dropdown(dc.ui.Select):
+
+    def __init__(self, user: dc.Member):
+        options = [
+            dc.SelectOption(label="Alles", value="any"),
+            dc.SelectOption(label="Allgemeinwissen", value="allgemein"),
+            dc.SelectOption(label="Geschichte", value="geschichte"),
+            dc.SelectOption(label="Geographie", value="geographie"),
+            dc.SelectOption(label="Mathematik", value="mathe"),
+            dc.SelectOption(label="Literatur", value="literatur"),
+            dc.SelectOption(label="Moderne", value="moderne"),
+            dc.SelectOption(label="Wissenschaft", value="wissenschaft"),
+            dc.SelectOption(label="Technologie", value="technologie"),
+        ]
+        super().__init__(placeholder="Wähle das Thema", options=options)
+        self.user = user
+
+    async def callback(self, interaction: dc.Interaction):
+        if self.values[0] == "any":
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Alles ausgewählt.")
+        elif self.values[0] == "allgemein":
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Allgemeinwissen ausgewählt.")
+        elif self.values[0] == "geschichte":
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Geschichte ausgewählt.")
+        elif self.values[0] == "geographie":
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Geographie ausgewählt.")
+        elif self.values[0] == "mathe":
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Mathematik ausgewählt.")
+        elif self.values[0] == "literatur":
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Literatur ausgewählt.")
+        elif self.values[0] == "moderne":
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Moderne ausgewählt.")
+        elif self.values[0] == "wissenschaft":
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Wissenschaft ausgewählt.")
+        elif self.values[0] == "technologie":
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Technologie ausgewählt.")
 
 
 
