@@ -75,7 +75,7 @@ class Auswahl_View(dc.ui.View):
     
 
 
-class Dropdown(dc.ui.Select):
+class Dropdown_Kategorie(dc.ui.Select):
 
     def __init__(self, user: dc.Member):
         options = [
@@ -89,7 +89,7 @@ class Dropdown(dc.ui.Select):
             dc.SelectOption(label="Wissenschaft", value="wissenschaft"),
             dc.SelectOption(label="Technologie", value="technologie"),
         ]
-        super().__init__(placeholder="Wähle das Thema", options=options)
+        super().__init__(placeholder="Wähle das Thema:", options=options)
         self.user = user
 
     async def callback(self, interaction: dc.Interaction):
@@ -113,6 +113,24 @@ class Dropdown(dc.ui.Select):
             await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Technologie ausgewählt.")
 
 
+class Dropdown_Schwierigkeit(dc.ui.Select):
+
+    def __init__(self, user: dc.Member):
+        options = [
+            dc.SelectOption(label="Einfach", value="leicht"),
+            dc.SelectOption(label="Normal", value="mittel"),
+            dc.SelectOption(label="Schwer", value="schwer"),
+        ]
+        super().__init__(placeholder="Wähle die Schwierigkeit:", options=options)
+        self.user = user
+
+    async def callback(self, interaction: dc.Interaction):
+        if self.values[0] == "any":
+            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Einfach ausgewählt.")
+        elif self.values[0] == "allgemein":
+            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Normal ausgewählt.")
+        elif self.values[0] == "geschichte":
+            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Schwer ausgewählt.")
 
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
