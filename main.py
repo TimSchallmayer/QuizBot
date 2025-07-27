@@ -77,7 +77,7 @@ class Auswahl_View(dc.ui.View):
 
 class Dropdown_Kategorie(dc.ui.Select):
 
-    def __init__(self, user: dc.Member):
+    def __init__(self, user: dc.Member, author: dc.Member):
         options = [
             dc.SelectOption(label="Alles", value="any"),
             dc.SelectOption(label="Allgemeinwissen", value="allgemein"),
@@ -91,30 +91,31 @@ class Dropdown_Kategorie(dc.ui.Select):
         ]
         super().__init__(placeholder="Wähle das Thema:", options=options)
         self.user = user
+        self.author = author
 
     async def callback(self, interaction: dc.Interaction):
         if self.values[0] == "any":
-            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Alles ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Alles ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "allgemein":
-            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Allgemeinwissen ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Allgemeinwissen ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "geschichte":
-            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Geschichte ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Geschichte ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "geographie":
-            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Geographie ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Geographie ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "mathe":
-            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Mathematik ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Mathematik ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "literatur":
-            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Literatur ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Literatur ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "moderne":
-            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Moderne ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Moderne ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "wissenschaft":
-            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Wissenschaft ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Wissenschaft ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "technologie":
-            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Technologie ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Kategorie Technologie ausgewählt.\n {self.author.mention}")
 
 
 class Dropdown_Schwierigkeit(dc.ui.Select):
-    def __init__(self, user: dc.Member):
+    def __init__(self, user: dc.Member, author: dc.Member):
         options = [
             dc.SelectOption(label="Einfach", value="leicht"),
             dc.SelectOption(label="Normal", value="mittel"),
@@ -125,20 +126,40 @@ class Dropdown_Schwierigkeit(dc.ui.Select):
         ]
         super().__init__(placeholder="Wähle die Schwierigkeit:", options=options)
         self.user = user
+        self.author = author
 
     async def callback(self, interaction: dc.Interaction):
         if self.values[0] == "leicht":
-            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Einfach ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Einfach ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "mittel":
-            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Normal ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Normal ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "schwer":
-            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Schwer ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Schwer ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "alle":
-            await interaction.response.send_message(f"{self.user.mention} hat jede Schwierigkeit ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat jede Schwierigkeit ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "einfach_mittel":
-            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Einfach und Normal ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Einfach und Normal ausgewählt.\n {self.author.mention}")
         elif self.values[0] == "normal_schwer":
-            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Normal und Schwer ausgewählt.")
+            await interaction.response.send_message(f"{self.user.mention} hat die Schwierigkeit Normal und Schwer ausgewählt.\n {self.author.mention}")
+
+class Quiz_create_View(dc.ui.View):
+
+    def __init__(self, user: dc.Member, author: dc.Member):
+        super().__init__(timeout=120)
+        self.user = user
+        self.author = author
+        self.message = None
+        self.add_item(Dropdown_Kategorie(user, author))
+        self.add_item(Dropdown_Schwierigkeit(user, author)) 
+    
+    async def on_timeout(self):
+        self.disable_all_items()
+        if self.message:
+
+            embed_timeout = dc.Embed(title="🕒 Quiz Erstellung abgelaufen", description = f"Die Zeit ist abgelaufen, bitte startet das Quiz erneut.\n {self.user.mention} {self.author.mention}", color = 0x0099E1)
+
+            await self.message.send(embed=embed_timeout, view=self)
+
 
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
@@ -197,8 +218,10 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
             await author.send(embed = embed_accept)
             await create_quiz_channel(inviteguild, user, author) 
             embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"{invitelink}\n", color = 0x0099E1)  
+            embed_create_quiz = dc.Embed(title = "Erstelle ein Quiz", description = f"Hier noch das embed einfügen", color = 0x0099E1)
             await author.send(embed =embed_invite)
             await user.send(embed =embed_invite)
+
         elif angenommen == 1: 
             await author.send(embed = embed_reject)  
         else:
