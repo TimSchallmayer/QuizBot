@@ -58,7 +58,7 @@ class Anfrage_View(dc.ui.View):
         self.disable_all_items()
         await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!")
         await self.message.edit(view=self)
-        await response(interaction.author, interaction.user, 0)
+        await response(self.msg.author, interaction.user, 0)
         self.stop()
     
     @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
@@ -67,18 +67,15 @@ class Anfrage_View(dc.ui.View):
         self.disable_all_items()
         await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!")
         await self.message.edit(view=self)
-        await response(interaction.author, interaction.user, 1)
+        await response(self.msg.author, interaction.user, 1)
         self.stop()
-
 class Auswahl_View(dc.ui.View):
     def __init__(self, user: dc.Member):
         self.user = user
-    
 
 
 class Dropdown_Kategorie(dc.ui.Select):
-    min_values = 1,
-    max_values = 8,
+ 
     def __init__(self, user: dc.Member, author: dc.Member):
         options = [
             dc.SelectOption(label="Alles", value="any"),
@@ -91,18 +88,15 @@ class Dropdown_Kategorie(dc.ui.Select):
             dc.SelectOption(label="Wissenschaft", value="wissenschaft"),
             dc.SelectOption(label="Technologie", value="technologie"),
         ]
-        super().__init__(placeholder="Wähle das Thema:", options=options)
+        super().__init__(placeholder="Wähle das Thema:", options=options, min_values=1, max_values=8)
         self.user = user
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
-        self.disable_all_items()
         await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Themenfeld ausgewählt.\n {self.author.mention}")
 
 
 class Dropdown_Schwierigkeit(dc.ui.Select):
-    min_values = 1,
-    max_values = 3,
     def __init__(self, user: dc.Member, author: dc.Member):
         
         options = [
@@ -110,12 +104,11 @@ class Dropdown_Schwierigkeit(dc.ui.Select):
             dc.SelectOption(label="Normal", value="mittel"),
             dc.SelectOption(label="Schwer", value="schwer"),
         ]
-        super().__init__(placeholder="Wähle die Schwierigkeit:", options=options)
+        super().__init__(placeholder="Wähle die Schwierigkeit:", options=options, min_values=1, max_values=3)
         self.user = user
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
-        self.disable_all_items()
         await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Schwierigkeit ausgewählt.\n {self.author.mention}")
 
 class Dropdown_Anzahl_Fragen(dc.ui.Select):
@@ -129,7 +122,6 @@ class Dropdown_Anzahl_Fragen(dc.ui.Select):
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
-        self.disable_all_items()
         await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Anzahl der Fragen ausgewählt.\n {self.author.mention}")
 
 class Quiz_create_View(dc.ui.View):
@@ -149,8 +141,12 @@ class Quiz_create_View(dc.ui.View):
 
             embed_timeout = dc.Embed(title="🕒 Quiz Erstellung abgelaufen", description = f"Die Zeit, zum erstellen des Quizes ist abgelaufen, bitte startet das Quiz erneut.\n {self.user.mention} {self.author.mention}", color = 0x0099E1)
 
-            await self.message.send(embed=embed_timeout, view=self)
-
+            await self.message.channel.send(embed=embed_timeout, view=self)
+    @dc.ui.button(label="Quiz starten", style=dc.ButtonStyle.green)
+    async def button_start_quiz_callback(self, button, interaction):
+        self.disable_all_items()
+        await interaction.response.send_message("Das Quiz wird nun gestartet gestartet!") #HIER UNBEDINGT NOCH EMBED EINFÜGEN
+        self.stop()
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
     global inviteguild
@@ -184,7 +180,6 @@ async def duel(msg, user: dc.Member):
             return
         view.message = sent_message
         inviteguild = msg.channel.guild
-        invite_channel = msg.channel
         await view.wait()
 
     except dc.Forbidden:
@@ -224,8 +219,10 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
 
 async def create_quiz_channel(guild : dc.Guild, user : dc.Member, author : dc.Member):
     global invitelink
+    global invite_channel
 
     channel = await guild.create_text_channel(f" Quiz Kanal {user.mention}{author.mention}")
     invitelink = await channel.create_invite(max_uses = 2, unique = True)
+    invite_channel = channel
 
 bot.run(Token)
