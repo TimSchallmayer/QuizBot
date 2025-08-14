@@ -96,7 +96,8 @@ class Dropdown_Kategorie(dc.ui.Select):
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
-        interaction.response.send_message(f"{self.user.mention} hat {self.values} als Themenfeld ausgewählt.\n {self.author.mention}")
+        self.disable_all_items()
+        await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Themenfeld ausgewählt.\n {self.author.mention}")
 
 
 class Dropdown_Schwierigkeit(dc.ui.Select):
@@ -114,26 +115,41 @@ class Dropdown_Schwierigkeit(dc.ui.Select):
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
-        interaction.response.send_message(f"{self.user.mention} hat {self.values} als Schwierigkeit ausgewählt.\n {self.author.mention}")
+        self.disable_all_items()
+        await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Schwierigkeit ausgewählt.\n {self.author.mention}")
+
+class Dropdown_Anzahl_Fragen(dc.ui.Select):
+    def __init__(self, user: dc.Member, author: dc.Member):
+        options = [
+            dc.SelectOption(label=str(i), value=str(i)) for i in range(1, 11)
+            ]
+        
+        super().__init__(placeholder="Wähle die Anzahl der Fragen:", options=options)
+        self.user = user
+        self.author = author
+
+    async def callback(self, interaction: dc.Interaction):
+        self.disable_all_items()
+        await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Anzahl der Fragen ausgewählt.\n {self.author.mention}")
 
 class Quiz_create_View(dc.ui.View):
 
     def __init__(self, user: dc.Member, author: dc.Member):
-        super().__init__(timeout=120)
+        super().__init__(timeout=300)
         self.user = user
         self.author = author
         self.message = None
         self.add_item(Dropdown_Kategorie(user, author))
         self.add_item(Dropdown_Schwierigkeit(user, author)) 
+        self.add_item(Dropdown_Anzahl_Fragen(user, author))
     
     async def on_timeout(self):
         self.disable_all_items()
         if self.message:
 
-            embed_timeout = dc.Embed(title="🕒 Quiz Erstellung abgelaufen", description = f"Die Zeit ist abgelaufen, bitte startet das Quiz erneut.\n {self.user.mention} {self.author.mention}", color = 0x0099E1)
+            embed_timeout = dc.Embed(title="🕒 Quiz Erstellung abgelaufen", description = f"Die Zeit, zum erstellen des Quizes ist abgelaufen, bitte startet das Quiz erneut.\n {self.user.mention} {self.author.mention}", color = 0x0099E1)
 
             await self.message.send(embed=embed_timeout, view=self)
-
 
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
@@ -168,6 +184,7 @@ async def duel(msg, user: dc.Member):
             return
         view.message = sent_message
         inviteguild = msg.channel.guild
+        invite_channel = msg.channel
         await view.wait()
 
     except dc.Forbidden:
@@ -176,6 +193,7 @@ async def duel(msg, user: dc.Member):
 async def response(author: dc.Member, user: dc.Member, angenommen): 
         global invitelink
         global inviteguild
+        global invite_channel
         
         embed_reject = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
         embed_reject.set_author(name=user.display_name, icon_url= user.avatar.url)
@@ -195,6 +213,9 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
             embed_create_quiz = dc.Embed(title = "Erstelle ein Quiz", description = "Stelle dein Quiz zusammen und starte es!\n Bitte wähle die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
             await author.send(embed =embed_invite)
             await user.send(embed =embed_invite)
+
+            view = Quiz_create_View(user, author)
+            await invite_channel.send(embed = embed_create_quiz, view = view)
 
         elif angenommen == 1: 
             await author.send(embed = embed_reject)  
