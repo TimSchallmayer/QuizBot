@@ -93,6 +93,29 @@ class Dropdown_Kategorie(dc.ui.Select):
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
+        string = ""
+        if "any" in self.values:
+            self.values = ["Allgemeinwissen, Geschichte, Geographie, Mathe, Literatur, Moderne, Wissenschaft, Technologie"]
+        else:
+            for value in self.values:
+                if value == "allgemein":
+                    string.append("Allgemeinwissen, ")
+                elif value == "geschichte":
+                    string.append("Geschichte, ")
+                elif value == "geographie":
+                    string.append("Geographie, ")
+                elif value == "mathe":
+                    string.append("Mathematik, ")
+                elif value == "literatur":
+                    string.append("Literatur, ")
+                elif value == "moderne":
+                    string.append("Moderne, ")
+                elif value == "wissenschaft":
+                    string.append("Wissenschaft, ")
+                elif value == "technologie":
+                    string.append("Technologie, ")
+            
+
         await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Themenfeld ausgewählt.\n {self.author.mention}")
 
 
