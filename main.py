@@ -95,7 +95,7 @@ class Dropdown_Kategorie(dc.ui.Select):
     async def callback(self, interaction: dc.Interaction):
         string = ""
         if "any" in self.values:
-            self.values = ["Allgemeinwissen, Geschichte, Geographie, Mathe, Literatur, Moderne, Wissenschaft, Technologie"]
+            string = "Allgemeinwissen, Geschichte, Geographie, Mathe, Literatur, Moderne, Wissenschaft, Technologie"
         else:
             for value in self.values:
                 if value == "allgemein":
@@ -114,9 +114,9 @@ class Dropdown_Kategorie(dc.ui.Select):
                     string.append("Wissenschaft, ")
                 elif value == "technologie":
                     string.append("Technologie, ")
-            
+            string = string[:-2] 
 
-        await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Themenfeld ausgewählt.\n {self.author.mention}")
+        await interaction.response.send_message(f"{self.user.mention} hat {string} als Themenfeld ausgewählt.\n {self.author.mention}")
 
 
 class Dropdown_Schwierigkeit(dc.ui.Select):
@@ -132,12 +132,23 @@ class Dropdown_Schwierigkeit(dc.ui.Select):
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
-        await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Schwierigkeit ausgewählt.\n {self.author.mention}")
+
+        string1 = ""
+        for value in self.values:
+                if value == "leicht":
+                    string1.append("Leicht, ")
+                elif value == "mittel":
+                    string1.append("Normal, ")
+                elif value == "schwer":
+                    string1.append("Schwer, ")
+        string1 = string1[:-2]
+
+        await interaction.response.send_message(f"{self.user.mention} hat {string1} als Schwierigkeit ausgewählt.\n {self.author.mention}")
 
 class Dropdown_Anzahl_Fragen(dc.ui.Select):
     def __init__(self, user: dc.Member, author: dc.Member):
         options = [
-            dc.SelectOption(label=str(i), value=str(i)) for i in range(1, 11)
+            dc.SelectOption(label=str(i), value=str(i)) for i in range(1, 101)
             ]
         
         super().__init__(placeholder="Wähle die Anzahl der Fragen:", options=options)
