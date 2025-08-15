@@ -73,10 +73,17 @@ class Auswahl_View(dc.ui.View):
     def __init__(self, user: dc.Member):
         self.user = user
 
+_disabled = False
+string = ""
+string_list = []
+string1 = ""
+string1_list = []
+anzahlfragen = 0
 
 class Dropdown_Kategorie(dc.ui.Select):
- 
+    
     def __init__(self, user: dc.Member, author: dc.Member):
+        global _disabled
         options = [
             dc.SelectOption(label="Alles", value="any"),
             dc.SelectOption(label="Allgemeinwissen", value="allgemein"),
@@ -88,75 +95,85 @@ class Dropdown_Kategorie(dc.ui.Select):
             dc.SelectOption(label="Wissenschaft", value="wissenschaft"),
             dc.SelectOption(label="Technologie", value="technologie"),
         ]
-        super().__init__(placeholder="Wähle das Thema:", options=options, min_values=1, max_values=8)
+        super().__init__(placeholder="Wähle das Thema:", options=options, min_values=1, max_values=8, disabled=_disabled)
         self.user = user
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
-        string = ""
+        global string
+        global string_list
+
         if "any" in self.values:
             string = "Allgemeinwissen, Geschichte, Geographie, Mathe, Literatur, Moderne, Wissenschaft, Technologie"
         else:
             for value in self.values:
                 if value == "allgemein":
-                    string.append("Allgemeinwissen, ")
+                    string_list.append("Allgemeinwissen, ")
                 elif value == "geschichte":
-                    string.append("Geschichte, ")
+                    string_list.append("Geschichte, ")
                 elif value == "geographie":
-                    string.append("Geographie, ")
+                    string_list.append("Geographie, ")
                 elif value == "mathe":
-                    string.append("Mathematik, ")
+                    string_list.append("Mathematik, ")
                 elif value == "literatur":
-                    string.append("Literatur, ")
+                    string_list.append("Literatur, ")
                 elif value == "moderne":
-                    string.append("Moderne, ")
+                    string_list.append("Moderne, ")
                 elif value == "wissenschaft":
-                    string.append("Wissenschaft, ")
+                    string_list.append("Wissenschaft, ")
                 elif value == "technologie":
-                    string.append("Technologie, ")
+                    string_list.append("Technologie, ")
+            string = "".join(string_list)
             string = string[:-2] 
-
-        await interaction.response.send_message(f"{self.user.mention} hat {string} als Themenfeld ausgewählt.\n {self.author.mention}")
+        await interaction.response.defer() 
+       # embed_callback = dc.Embed(title="Themenfeld ausgewählt", description=f"{self.user.mention} hat {string} als Themenfeld ausgewählt.\n {self.author.mention}", color=0x0099E1)
+        #await interaction.response.send_message(embed=embed_callback)
 
 
 class Dropdown_Schwierigkeit(dc.ui.Select):
     def __init__(self, user: dc.Member, author: dc.Member):
-        
+        global _disabled
         options = [
             dc.SelectOption(label="Einfach", value="leicht"),
             dc.SelectOption(label="Normal", value="mittel"),
             dc.SelectOption(label="Schwer", value="schwer"),
         ]
-        super().__init__(placeholder="Wähle die Schwierigkeit:", options=options, min_values=1, max_values=3)
+        super().__init__(placeholder="Wähle die Schwierigkeit:", options=options, min_values=1, max_values=3, disabled=_disabled)
         self.user = user
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
-
-        string1 = ""
+        global string1
+        global string1_list
+        
         for value in self.values:
                 if value == "leicht":
-                    string1.append("Leicht, ")
+                    string1_list.append("Leicht, ")
                 elif value == "mittel":
-                    string1.append("Normal, ")
+                    string1_list.append("Normal, ")
                 elif value == "schwer":
-                    string1.append("Schwer, ")
+                    string1_list.append("Schwer, ")
+        string1 = "".join(string1_list)
         string1 = string1[:-2]
-
-        await interaction.response.send_message(f"{self.user.mention} hat {string1} als Schwierigkeit ausgewählt.\n {self.author.mention}")
+        await interaction.response.defer() 
+        #await interaction.response.send_message(f"{self.user.mention} hat {string1} als Schwierigkeit ausgewählt.\n {self.author.mention}")
 
 class Dropdown_Anzahl_Fragen(dc.ui.Select):
     def __init__(self, user: dc.Member, author: dc.Member):
+        global _disabled
         options = [
-            dc.SelectOption(label=str(i), value=str(i)) for i in range(1, 101)
+            dc.SelectOption(label=str(i), value=str(i)) for i in range(1, 26)
             ]
         
-        super().__init__(placeholder="Wähle die Anzahl der Fragen:", options=options)
+        super().__init__(placeholder="Wähle die Anzahl der Fragen:", options=options, min_values=1, max_values=1, disabled=_disabled)
         self.user = user
         self.author = author
 
     async def callback(self, interaction: dc.Interaction):
-        await interaction.response.send_message(f"{self.user.mention} hat {self.values} als Anzahl der Fragen ausgewählt.\n {self.author.mention}")
+        global anzahlfragen
+        anzahlfragen = int(self.values[0])
+        await interaction.response.defer() 
+       # await interaction.response.send_message(f"{self.user.mention} hat {self.values[0]} als Anzahl der Fragen ausgewählt.\n {self.author.mention}")
 
 class Quiz_create_View(dc.ui.View):
 
@@ -175,11 +192,20 @@ class Quiz_create_View(dc.ui.View):
 
             embed_timeout = dc.Embed(title="🕒 Quiz Erstellung abgelaufen", description = f"Die Zeit, zum erstellen des Quizes ist abgelaufen, bitte startet das Quiz erneut.\n {self.user.mention} {self.author.mention}", color = 0x0099E1)
 
+            await self.message.edit(view=self)
             await self.message.channel.send(embed=embed_timeout, view=self)
+
     @dc.ui.button(label="Quiz starten", style=dc.ButtonStyle.green)
     async def button_start_quiz_callback(self, button, interaction):
+        global string
+        global string1
+        global anzahlfragen
+        global _disabled
+        _disabled = True
         self.disable_all_items()
-        await interaction.response.send_message("Das Quiz wird nun gestartet gestartet!") #HIER UNBEDINGT NOCH EMBED EINFÜGEN
+        await self.message.edit(view=self)
+        embed_start = dc.Embed(title="Quiz gestartet", description=f"Das Quiz wird in 10s mit {self.user.mention} und {self.author.mention} gestartet.\n\n **Schwierigkeit**\n{self.author.mention} hat {string1} als Schwierigkeit ausgewählt. \n\n **Themenbereich**\n{self.author.mention} hat {string} als Themenbereich ausgewählt.\n\n **Fragenanzahl** \n {self.author.mention} hat {anzahlfragen} als Fragenanzahl ausgewählt\n", color=0x00D166)
+        await interaction.response.send_message(embed=embed_start)
         self.stop()
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
@@ -239,7 +265,7 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
             await author.send(embed = embed_accept)
             await create_quiz_channel(inviteguild, user, author) 
             embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"{invitelink}\n", color = 0x0099E1)  
-            embed_create_quiz = dc.Embed(title = "Erstelle ein Quiz", description = "Stelle dein Quiz zusammen und starte es!\n Bitte wähle die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
+            embed_create_quiz = dc.Embed(title = "Erstelle ein Quiz", description = "**Stelle dein Quiz zusammen und starte es!**\n\n Bitte wähle die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
             await author.send(embed =embed_invite)
             await user.send(embed =embed_invite)
 
