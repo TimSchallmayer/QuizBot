@@ -285,11 +285,11 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
         else:
             await author.send(embed = embed_timeout)  
 
-async def create_quiz_channel(guild : dc.Guild, user : dc.Member, author : dc.Member):
+async def create_quiz_channel(guild : dc.Guild, user : dc.Member, author : dc.Member, overwrites = None):
     global invitelink
     global invite_channel
 
-    channel = await guild.create_text_channel(f" Quiz Kanal {user.mention}{author.mention}")
+    channel = await guild.create_text_channel(f" Quiz Kanal {user.mention}{author.mention}", overwrites=overwrites)
     invitelink = await channel.create_invite(max_uses = 2, unique = True)
     invite_channel = channel
 
