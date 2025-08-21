@@ -37,8 +37,11 @@ class Anfrage_View(dc.ui.View):
         self.message = None
         self.msg = msg
         self.user = user
+        self.completed = False
 
     async def on_timeout(self):
+        if self.completed:
+            return
         self.disable_all_items()
         embed_timeout = dc.Embed(title="📩 Quiz-Einladung",
         description=(
@@ -54,7 +57,7 @@ class Anfrage_View(dc.ui.View):
 
     @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
     async def button_accept_callback(self, button, interaction):
-        
+        self.completed = True
         self.disable_all_items()
         await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!")
         await self.message.edit(view=self)
@@ -79,6 +82,10 @@ string_list = []
 string1 = ""
 string1_list = []
 anzahlfragen = 0
+list_of_kategories = []
+list_of_difficulties = []
+string_of_kategories = ""
+string_of_difficulties = ""
 
 class Dropdown_Kategorie(dc.ui.Select):
     
@@ -86,14 +93,14 @@ class Dropdown_Kategorie(dc.ui.Select):
         global _disabled
         options = [
             dc.SelectOption(label="Alles", value="any"),
-            dc.SelectOption(label="Allgemeinwissen", value="allgemein"),
-            dc.SelectOption(label="Geschichte", value="geschichte"),
-            dc.SelectOption(label="Geographie", value="geographie"),
-            dc.SelectOption(label="Mathematik", value="mathe"),
-            dc.SelectOption(label="Literatur", value="literatur"),
-            dc.SelectOption(label="Moderne", value="moderne"),
-            dc.SelectOption(label="Wissenschaft", value="wissenschaft"),
-            dc.SelectOption(label="Technologie", value="technologie"),
+            dc.SelectOption(label="Allgemeinwissen", value="Allgemeinwissen"),
+            dc.SelectOption(label="Geschichte", value="Geschichte"),
+            dc.SelectOption(label="Geographie", value="Geographie"),
+            dc.SelectOption(label="Mathematik", value="Mathematik"),
+            dc.SelectOption(label="Literatur", value="Literatur"),
+            dc.SelectOption(label="Moderne", value="Moderne"),
+            dc.SelectOption(label="Wissenschaft", value="Wissenschaft"),
+            dc.SelectOption(label="Technologie", value="Technologie"),
         ]
         super().__init__(placeholder="Wähle das Thema:", options=options, min_values=1, max_values=8, disabled=_disabled)
         self.user = user
@@ -102,29 +109,50 @@ class Dropdown_Kategorie(dc.ui.Select):
     async def callback(self, interaction: dc.Interaction):
         global string
         global string_list
+        global list_of_kategories
+        global string_of_kategories
 
         if "any" in self.values:
             string = "Allgemeinwissen, Geschichte, Geographie, Mathe, Literatur, Moderne, Wissenschaft, Technologie"
+            list_of_kategories = ["Allgemeinwissen", "Geschichte", "Geographie", "Mathematik", "Literatur", "Moderne", "Wissenschaft", "Technologie"]
         else:
             for value in self.values:
-                if value == "allgemein":
+                if value == "Allgemeinwissen":
                     string_list.append("Allgemeinwissen, ")
-                elif value == "geschichte":
+                    list_of_kategories.append("'Allgemeinwissen', ")
+
+                elif value == "Geschichte":
                     string_list.append("Geschichte, ")
-                elif value == "geographie":
+                    list_of_kategories.append("'Geschichte', ")
+
+                elif value == "Geographie":
                     string_list.append("Geographie, ")
-                elif value == "mathe":
+                    list_of_kategories.append("'Geographie', ")
+
+                elif value == "Mathematik":
                     string_list.append("Mathematik, ")
-                elif value == "literatur":
+                    list_of_kategories.append("'Mathematik', ")
+
+                elif value == "Literatur":
                     string_list.append("Literatur, ")
-                elif value == "moderne":
+                    list_of_kategories.append("'Literatur', ")
+
+                elif value == "Moderne":
                     string_list.append("Moderne, ")
-                elif value == "wissenschaft":
+                    list_of_kategories.append("'Moderne', ")
+
+                elif value == "Wissenschaft":
                     string_list.append("Wissenschaft, ")
-                elif value == "technologie":
+                    list_of_kategories.append("'Wissenschaft', ")
+
+                elif value == "Technologie":
                     string_list.append("Technologie, ")
+                    list_of_kategories.append("'Technologie', ")
+
             string = "".join(string_list)
             string = string[:-2] 
+            string_of_kategories = "".join(list_of_kategories)
+            string_of_kategories = string_of_kategories[:-2]
         await interaction.response.defer() 
        # embed_callback = dc.Embed(title="Themenfeld ausgewählt", description=f"{self.user.mention} hat {string} als Themenfeld ausgewählt.\n {self.author.mention}", color=0x0099E1)
         #await interaction.response.send_message(embed=embed_callback)
@@ -145,16 +173,26 @@ class Dropdown_Schwierigkeit(dc.ui.Select):
     async def callback(self, interaction: dc.Interaction):
         global string1
         global string1_list
+        global list_of_difficulties
+        global string_of_difficulties
         
         for value in self.values:
                 if value == "leicht":
                     string1_list.append("Leicht, ")
+                    list_of_difficulties.append("'EASY', ")
+
                 elif value == "mittel":
                     string1_list.append("Normal, ")
+                    list_of_difficulties.append("'MEDIUM', ")
+
                 elif value == "schwer":
                     string1_list.append("Schwer, ")
+                    list_of_difficulties.append("'HARD', ")
+
         string1 = "".join(string1_list)
         string1 = string1[:-2]
+        string_of_difficulties = "".join(list_of_difficulties)
+        string_of_difficulties = string_of_difficulties[:-2]
         await interaction.response.defer() 
         #await interaction.response.send_message(f"{self.user.mention} hat {string1} als Schwierigkeit ausgewählt.\n {self.author.mention}")
 
@@ -271,15 +309,24 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
             }
             
             await create_quiz_channel(inviteguild, user, author, overwrites = overwrites) 
+
             embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"{invitelink}\n", color = 0x0099E1)  
+
             embed_create_quiz = dc.Embed(title = "Erstelle ein Quiz", description = f"** {author.mention} stelle dein Quiz zusammen und starte es!**\n\n Bitte wähle die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
+
             embed_create_quiz.set_author(name=author.display_name, icon_url=author.avatar.url)
             await author.send(embed =embed_invite)
             await user.send(embed =embed_invite)
 
             view = Quiz_create_View(user, author)
+
             await invite_channel.send(embed = embed_create_quiz, view = view)
 
+            while not view.is_finished():
+                await asyncio.sleep(1)
+                
+            await find_questions()
+            
         elif angenommen == 1: 
             await author.send(embed = embed_reject)  
         else:
@@ -292,5 +339,22 @@ async def create_quiz_channel(guild : dc.Guild, user : dc.Member, author : dc.Me
     channel = await guild.create_text_channel(f" Quiz Kanal {user.mention}{author.mention}", overwrites=overwrites)
     invitelink = await channel.create_invite(max_uses = 2, unique = True)
     invite_channel = channel
+
+async def find_questions():
+    global string_of_kategories
+    global string_of_difficulties
+    global anzahlfragen
+
+    sql_query = f"""SELECT * FROM FRAGEN 
+            WHERE KATERGORIE IN ({string_of_kategories}) AND DIFFICULTY IN ({string_of_difficulties}) 
+            ORDER BY RAND();"""
+
+    cursor.execute(sql_query)
+
+    rows = cursor.fetchmany(anzahlfragen)
+
+    for row in rows:
+        print(row)
+
 
 bot.run(Token)
