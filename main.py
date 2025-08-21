@@ -269,7 +269,7 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
                 author: dc.PermissionOverwrite(view_channel=True),
                 user: dc.PermissionOverwrite(view_channel=True) 
             }
-
+            
             await create_quiz_channel(inviteguild, user, author, overwrites = overwrites) 
             embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"{invitelink}\n", color = 0x0099E1)  
             embed_create_quiz = dc.Embed(title = "Erstelle ein Quiz", description = f"** {author.mention} stelle dein Quiz zusammen und starte es!**\n\n Bitte wähle die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
