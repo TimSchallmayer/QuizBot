@@ -259,19 +259,32 @@ class Quiz_Modal(dc.ui.Modal, title="Quiz Antwort"):
         self.answer = dc.ui.TextInput(label="Antwort", placeholder="Gib deine Antwort hier ein", required=True)
         self.answer1 = answer1
         self.add_item(self.answer)
+        self.is_timeout = False
+        self.is_timeout_counter = 0
 
     async def on_submit(self, interaction: dc.Interaction):
         global antwort
 
+        while self.user not in antwort and self.is_timeout_counter < 180:
+            await asyncio.sleep(1)
+            self.is_timeout_counter += 1
+            
+        if self.is_timeout_counter >= 180:
+                self.is_timeout = True       
+        
         emdbed_antwort = dc.Embed(title="Antwort eingereicht", description=f"{self.user.mention} hat die Antwort auf die Frage '{self.question}' eingereicht: {self.answer.value}", color=0x00D166)
         await interaction.response.send_message(embed=emdbed_antwort, ephemeral=True)
-        if self.answer.value.lower() == self.answer1.lower():
+        if self.answer.value.lower() == self.answer1.lower() and not self.is_timeout:
             embed_richtig = dc.Embed(title="Richtige Antwort", description=f"{self.user.mention} hat die richtige Antwort auf die Frage '{self.question}' eingereicht: {self.answer.value}", color=0x00D166)
             antwort[self.user] = embed_richtig
             
-        else:
+        elif self.answer.value.lower() != self.answer1.lower() and not self.is_timeout:
             embed_falsch = dc.Embed(title="Falsche Antwort", description=f"{self.user.mention} hat die falsche Antwort auf die Frage '{self.question}' eingereicht: {self.answer.value}", color=0xF93A2F)
             antwort[self.user] = embed_falsch
+
+        elif self.is_timeout:
+            embed_timeout = dc.Embed(title="Antwortzeit abgelaufen", description=f"{self.user.mention} hat nicht rechtzeitig auf die Frage '{self.question}' geantwortet.", color=0x597E8D)
+            antwort[self.user] = embed_timeout
 
 
 
@@ -360,15 +373,16 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
             fragen = await find_questions()
             if fragen:
                 for frage in fragen:
+                    
+                    question_embed = dc.Embed(title=frage[1], description="Bitte gebt sendet eure Antworten ein.\n Ihr habt **3 Minuten** zeit die Frage zu beantworten", color=0x0099E1)
+                    await invite_channel.send(embed=question_embed)
                     modal_player_user = Quiz_Modal(user, frage[1], frage[2])
                     modal_player_author = Quiz_Modal(author, frage[1], frage[2])
-                    question_embed = dc.Embed(title=frage[1], description="Bitte gebt sendet eure Antworten ein.\n Ihr habt 3 Minuten zeit die Frage zu beantworten", color=0x0099E1)
-                    await invite_channel.send(embed=question_embed)
 
                     await invite_channel.send_modal(modal=modal_player_user)
                     await invite_channel.send_modal(modal=modal_player_author)
             else:
-                await invite_channel.send("Keine Fragen gefunden für das Quiz.")
+                await invite_channel.send("Keine Fragen für das quiz gefunden.")
             
         elif angenommen == 1: 
             await author.send(embed = embed_reject)  
