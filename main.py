@@ -86,6 +86,8 @@ list_of_kategories = []
 list_of_difficulties = []
 string_of_kategories = ""
 string_of_difficulties = ""
+answer = ""
+antwort = {}
 
 class Dropdown_Kategorie(dc.ui.Select):
     
@@ -245,6 +247,34 @@ class Quiz_create_View(dc.ui.View):
         embed_start = dc.Embed(title="Quiz gestartet", description=f"Das Quiz wird in 10s mit {self.user.mention} und {self.author.mention} gestartet.\n\n **Schwierigkeit**\n{self.author.mention} hat {string1} als Schwierigkeit ausgewählt. \n\n **Themenbereich**\n{self.author.mention} hat {string} als Themenbereich ausgewählt.\n\n **Fragenanzahl** \n {self.author.mention} hat {anzahlfragen} als Fragenanzahl ausgewählt\n", color=0x00D166)
         await interaction.response.send_message(embed=embed_start)
         self.stop()
+
+
+class Quiz_Modal(dc.ui.Modal, title="Quiz Antwort"):
+    global answer
+
+    def __init__(self, user: dc.Member, question: str, answer1: str):
+        super().__init__()
+        self.user = user
+        self.question = question
+        self.answer = dc.ui.TextInput(label="Antwort", placeholder="Gib deine Antwort hier ein", required=True)
+        self.answer1 = answer1
+        self.add_item(self.answer)
+
+    async def on_submit(self, interaction: dc.Interaction):
+        global antwort
+
+        emdbed_antwort = dc.Embed(title="Antwort eingereicht", description=f"{self.user.mention} hat die Antwort auf die Frage '{self.question}' eingereicht: {self.answer.value}", color=0x00D166)
+        await interaction.response.send_message(embed=emdbed_antwort, ephemeral=True)
+        if self.answer.value.lower() == self.answer1.lower():
+            embed_richtig = dc.Embed(title="Richtige Antwort", description=f"{self.user.mention} hat die richtige Antwort auf die Frage '{self.question}' eingereicht: {self.answer.value}", color=0x00D166)
+            antwort[self.user] = embed_richtig
+            
+        else:
+            embed_falsch = dc.Embed(title="Falsche Antwort", description=f"{self.user.mention} hat die falsche Antwort auf die Frage '{self.question}' eingereicht: {self.answer.value}", color=0xF93A2F)
+            antwort[self.user] = embed_falsch
+
+
+
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
     global inviteguild
@@ -287,6 +317,7 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
         global invitelink
         global inviteguild
         global invite_channel
+        global richtige_antwort
         
         embed_reject = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
         embed_reject.set_author(name=user.display_name, icon_url= user.avatar.url)
@@ -324,8 +355,20 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
 
             while not view.is_finished():
                 await asyncio.sleep(1)
-                
-            await find_questions()
+            
+            
+            fragen = await find_questions()
+            if fragen:
+                for frage in fragen:
+                    modal_player_user = Quiz_Modal(user, frage[1], frage[2])
+                    modal_player_author = Quiz_Modal(author, frage[1], frage[2])
+                    question_embed = dc.Embed(title=frage[1], description="Bitte gebt sendet eure Antworten ein.\n Ihr habt 3 Minuten zeit die Frage zu beantworten", color=0x0099E1)
+                    await invite_channel.send(embed=question_embed)
+
+                    await invite_channel.send_modal(modal=modal_player_user)
+                    await invite_channel.send_modal(modal=modal_player_author)
+            else:
+                await invite_channel.send("Keine Fragen gefunden für das Quiz.")
             
         elif angenommen == 1: 
             await author.send(embed = embed_reject)  
@@ -352,9 +395,7 @@ async def find_questions():
     cursor.execute(sql_query)
 
     rows = cursor.fetchmany(anzahlfragen)
-
-    for row in rows:
-        print(row)
+    return rows
 
 
 bot.run(Token)
