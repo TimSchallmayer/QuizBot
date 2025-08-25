@@ -1,13 +1,13 @@
 import discord as dc
 from discord.ext import commands
-
+from cogs import make_channel
 
 
 class duel_requests(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-    
-    async def duel_request(self, msg, user: dc.Member):
+     
+    async def duel_request1(self, msg, user: dc.Member):
         embed_succesfull = dc.Embed(title = "Anfrage wurde verschickt", description = f"Eine Quiz Anfrage wurde an {user.mention} gesendet.\n", color = 0x00D166)
         embed_succesfull.set_author(name = user.display_name, icon_url = user.avatar.url)
 
@@ -84,9 +84,6 @@ class Anfrage_View(dc.ui.View):
         self.stop()
 
 async def response(author: dc.Member, user: dc.Member, angenommen): 
-        global invitelink
-        global inviteguild
-        global invite_channel
         
         embed_reject = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
         embed_reject.set_author(name=user.display_name, icon_url= user.avatar.url)
@@ -101,6 +98,7 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
 
         if angenommen == 0:
             await author.send(embed = embed_accept)
+            await make_channel.make_channel(author, user)  
             return
             
         elif angenommen == 1: 
