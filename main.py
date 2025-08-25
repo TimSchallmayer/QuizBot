@@ -19,52 +19,6 @@ intents.members = True
 bot = commands.Bot(command_prefix="/", intents=intents
 )
 
-class Anfrage_View(dc.ui.View): 
-
-    def __init__(self, msg, user: dc.Member): 
-        super().__init__(timeout=120)
-        self.message = None
-        self.msg = msg
-        self.user = user
-        self.completed = False
-
-    async def on_timeout(self):
-        if self.completed:
-            return
-        self.disable_all_items()
-        embed_timeout = dc.Embed(title="📩 Quiz-Einladung",
-        description=(
-            f"Hey! {self.msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
-            "**Möchtest du an dem Quiz teilnehmen?** 🎉\n"
-            "Du hast 2 Minuten Zeit, dich zu entscheiden.\n"
-        ), color = 0x597E8D)
-        embed_timeout.set_author(name=self.msg.author.display_name, icon_url=self.msg.author.avatar.url)
-        await self.message.edit(embed=embed_timeout, view = self)
-        await self.user.send(f"🕒 Die Zeit ist abgelaufen {self.user.mention}, falls du doch spielen willst schicke eine neue Anfrage!", reference = self.message)
-        await response(self.msg.author, self.user, 2)
-        
-
-    @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
-    async def button_accept_callback(self, button, interaction):
-        self.completed = True
-        self.disable_all_items()
-        await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!")
-        await self.message.edit(view=self)
-        await response(self.msg.author, interaction.user, 0)
-        self.stop()
-    
-    @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
-    async def button_reject_callback(self, button, interaction):
-
-        self.disable_all_items()
-        await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!")
-        await self.message.edit(view=self)
-        await response(self.msg.author, interaction.user, 1)
-        self.stop()
-class Auswahl_View(dc.ui.View):
-    def __init__(self, user: dc.Member):
-        self.user = user
-
 _disabled = False
 string = ""
 string_list = []
