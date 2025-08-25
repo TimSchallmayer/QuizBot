@@ -4,7 +4,7 @@ from discord.ui import Button # type: ignore
 import os
 from dotenv import load_dotenv # type: ignore
 import asyncio
-from cogs import duel_requests
+from cogs.duel_requests import duel_requests as duel_requests_class
 
 
 invitelink = None
@@ -75,7 +75,8 @@ class Quiz_Modal(dc.ui.Modal):
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
     
-    await duel_requests.duel_request1(msg, user)
+    class_of_duel_requests = duel_requests_class(bot)
+    await class_of_duel_requests.duel_request(msg, user)
 
 
 for filename in os.listdir('./cogs'):
