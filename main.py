@@ -4,18 +4,7 @@ from discord.ui import Button # type: ignore
 import os
 from dotenv import load_dotenv # type: ignore
 import asyncio
-import mysql.connector # type: ignore
-
-
-db = mysql.connector.connect(
-    host = "localhost",
-    port = 3000,
-    user = "root",
-    password = "root",
-    database = "main"
-)
-
-cursor = db.cursor()
+from cogs import database, duel_requests
 
 
 invitelink = None
@@ -249,7 +238,7 @@ class Quiz_create_View(dc.ui.View):
         self.stop()
 
 
-class Quiz_Modal(dc.ui.Modal, title="Quiz Antwort"):
+class Quiz_Modal(dc.ui.Modal):
     global answer
 
     def __init__(self, user: dc.Member, question: str, answer1: str):
@@ -290,104 +279,51 @@ class Quiz_Modal(dc.ui.Modal, title="Quiz Antwort"):
 
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
-    global inviteguild
-
-    embed_succesfull = dc.Embed(title = "Anfrage wurde verschickt", description = f"Eine Quiz Anfrage wurde an {user.mention} gesendet.\n", color = 0x00D166)
-    embed_succesfull.set_author(name = user.display_name, icon_url = user.avatar.url)
-
-    embed_error = dc.Embed(title = "Anfrage wurde nicht zugestellt", description = f"{user.mention} konnte nicht gefunden werden oder akzeptiert keien Dms.", color = 0xF93A2F)
-    embed_error.set_author(name = user.display_name, icon_url = user.avatar.url)
     
-    
-    try:
-        # await msg.author.send(embed = embed_succesfull)
-        await msg.response.send_message(embed = embed_succesfull, ephemeral=True)
-        
-        
+    duel_requests.duel_request(msg, user)
 
-        embed = dc.Embed(title="📩 Quiz-Einladung",
-        description=(
-            f"Hey! {msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
-            "**Möchtest du an dem Quiz teilnehmen?** 🎉\n"
-            "Du hast 2 Minuten Zeit, dich zu entscheiden.\n"
-        ), color = 0x0099E1)
-        embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
-
-        view = Anfrage_View(msg, user)
-        try:
-            sent_message = await user.send(embed=embed, view=view)
-        except dc.Forbidden:
-            msg.author.send("Der Nutzer ist nicht erreichbar, da er vermutlich keine Dms akzeptiert.")
-            return
-        view.message = sent_message
-        inviteguild = msg.channel.guild
-        await view.wait()
-
-    except dc.Forbidden:
-        await msg.author.send(embed = embed_error)
-
-async def response(author: dc.Member, user: dc.Member, angenommen): 
+async def make_channel(author: dc.Member, user: dc.Member, angenommen): 
         global invitelink
         global inviteguild
         global invite_channel
-        global richtige_antwort
-        
-        embed_reject = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
-        embed_reject.set_author(name=user.display_name, icon_url= user.avatar.url)
 
-        embed_accept = dc.Embed(title= "✅ Anfrage angenommen ✅", description = (f"{user.mention} hat die Anfrage angenommen.\n"), color = 0x00D166)
-        embed_accept.set_author(name=user.display_name, icon_url = user.avatar.url)
-
-        embed_timeout = dc.Embed(title = "🕒 Nicht auf Anfrage reagiert (Timeout) 🕒", description = (f"{user.mention} hat nicht auf die Anfrage reagiert (Timeout).\n" "Versuche die Anfrage erneut zu senden \noder den Nutzer anders zu erreichen\n"), color = 0x597E8D)
-        embed_timeout.set_author(name = user.display_name, icon_url = user.avatar.url)
-
-        
-
-        if angenommen == 0:
-            await author.send(embed = embed_accept)
-
-            overwrites = {
-                inviteguild.default_role: dc.PermissionOverwrite(view_channel=False),  
-                author: dc.PermissionOverwrite(view_channel=True),
-                user: dc.PermissionOverwrite(view_channel=True) 
+        overwrites = {
+            inviteguild.default_role: dc.PermissionOverwrite(view_channel=False),  
+            author: dc.PermissionOverwrite(view_channel=True),
+            user: dc.PermissionOverwrite(view_channel=True) 
             }
             
-            await create_quiz_channel(inviteguild, user, author, overwrites = overwrites) 
+        await create_quiz_channel(inviteguild, user, author, overwrites = overwrites) 
 
-            embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"{invitelink}\n", color = 0x0099E1)  
+        embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"{invitelink}\n", color = 0x0099E1)  
 
-            embed_create_quiz = dc.Embed(title = "Erstelle ein Quiz", description = f"** {author.mention} stelle dein Quiz zusammen und starte es!**\n\n Bitte wähle die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
+        embed_create_quiz = dc.Embed(title = "Erstelle ein Quiz", description = f"** {author.mention} stelle dein Quiz zusammen und starte es!**\n\n Bitte wähle die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
 
-            embed_create_quiz.set_author(name=author.display_name, icon_url=author.avatar.url)
-            await author.send(embed =embed_invite)
-            await user.send(embed =embed_invite)
+        embed_create_quiz.set_author(name=author.display_name, icon_url=author.avatar.url)
+        await author.send(embed =embed_invite)
+        await user.send(embed =embed_invite)
 
-            view = Quiz_create_View(user, author)
+        view = Quiz_create_View(user, author)
 
-            await invite_channel.send(embed = embed_create_quiz, view = view)
+        await invite_channel.send(embed = embed_create_quiz, view = view)
 
-            while not view.is_finished():
+        while not view.is_finished():
                 await asyncio.sleep(1)
             
             
-            fragen = await find_questions()
-            if fragen:
-                for frage in fragen:
+        fragen = await database.find_questions()
+        if fragen:
+            for frage in fragen:
                     
-                    question_embed = dc.Embed(title=frage[1], description="Bitte gebt sendet eure Antworten ein.\n Ihr habt **3 Minuten** zeit die Frage zu beantworten", color=0x0099E1)
-                    await invite_channel.send(embed=question_embed)
-                    modal_player_user = Quiz_Modal(user, frage[1], frage[2])
-                    modal_player_author = Quiz_Modal(author, frage[1], frage[2])
+                question_embed = dc.Embed(title=frage[1], description="Bitte gebt sendet eure Antworten ein.\n Ihr habt **3 Minuten** zeit die Frage zu beantworten", color=0x0099E1)
+                await invite_channel.send(embed=question_embed)
+                modal_player_user = Quiz_Modal(user, frage[1], frage[2], title="Quiz Antwort")
+                modal_player_author = Quiz_Modal(author, frage[1], frage[2], title="Quiz Antwort")
 
-                    await invite_channel.send_modal(modal=modal_player_user)
-                    await invite_channel.send_modal(modal=modal_player_author)
-            else:
-                await invite_channel.send("Keine Fragen für das quiz gefunden.")
-            
-        elif angenommen == 1: 
-            await author.send(embed = embed_reject)  
+                await invite_channel.send_modal(modal=modal_player_user)
+                await invite_channel.send_modal(modal=modal_player_author)
         else:
-            await author.send(embed = embed_timeout)  
+            await invite_channel.send("Keine Fragen für das quiz gefunden.")
 
 async def create_quiz_channel(guild : dc.Guild, user : dc.Member, author : dc.Member, overwrites = None):
     global invitelink
@@ -397,19 +333,15 @@ async def create_quiz_channel(guild : dc.Guild, user : dc.Member, author : dc.Me
     invitelink = await channel.create_invite(max_uses = 2, unique = True)
     invite_channel = channel
 
-async def find_questions():
-    global string_of_kategories
-    global string_of_difficulties
-    global anzahlfragen
+for filename in os.listdir('./cogs'):
+    if filename.endswith('.py'):
+        bot.load_extension(f'cogs.{filename[:-3]}')
 
-    sql_query = f"""SELECT * FROM FRAGEN 
-            WHERE KATERGORIE IN ({string_of_kategories}) AND DIFFICULTY IN ({string_of_difficulties}) 
-            ORDER BY RAND();"""
-
-    cursor.execute(sql_query)
-
-    rows = cursor.fetchmany(anzahlfragen)
-    return rows
-
+bot.choosen_kategories = string_of_kategories
+bot.choosen_difficulties = string_of_difficulties
+bot.anzahlfragen = anzahlfragen
+bot.invitelink = invitelink
+bot.inviteguild = inviteguild
+bot.invite_channel = invite_channel
 
 bot.run(Token)
