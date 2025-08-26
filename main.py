@@ -5,7 +5,8 @@ import os
 from dotenv import load_dotenv # type: ignore
 import asyncio
 from cogs.duel_requests import duel_requests as duel_requests_class
-
+#import logging
+#logging.basicConfig(level=logging.DEBUG)
 
 invitelink = None
 inviteguild = None
@@ -83,6 +84,8 @@ for filename in os.listdir('./cogs'):
     if filename.endswith('.py'):
         bot.load_extension(f'cogs.{filename[:-3]}')
 
+
+#bot.load_extension('cogs.duel_requests')
 
 bot.choosen_kategories = string_of_kategories
 bot.choosen_difficulties = string_of_difficulties
