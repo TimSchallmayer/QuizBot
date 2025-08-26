@@ -1,6 +1,6 @@
 import discord as dc
 from discord.ext import commands
-from cogs import database
+from cogs.database import Database as database_class
 import asyncio
 
 string = ""
@@ -27,33 +27,32 @@ class make_channel(commands.Cog):
             user: dc.PermissionOverwrite(view_channel=True) 
             }
             
-        await create_quiz_channel(self.bot.inviteguild, user, author, overwrites = overwrites) 
+        await create_quiz_channel(self, self.bot.inviteguild, user, author, overwrites = overwrites) 
 
         embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"{self.bot.invitelink}\n", color = 0x0099E1)  
 
-        embed_create_quiz = dc.Embed(title = "Erstelle ein Quiz", description = f"** {author.mention} stelle dein Quiz zusammen und starte es!**\n\n Bitte wähle die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
+        embed_create_quiz = dc.Embed(title = "Erstellt ein Quiz", description = f"** {author.mention} {user.mention} stellt euer Quiz zusammen und startet es!**\n\n Bitte wählt die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
 
-        embed_create_quiz.set_author(name=author.display_name, icon_url=author.avatar.url)
         await author.send(embed =embed_invite)
         await user.send(embed =embed_invite)
 
-        view = Quiz_create_View(user, author)
-
+        view = Quiz_create_View(user, author, self.bot)
+        
         await self.bot.invite_channel.send(embed = embed_create_quiz, view = view)
 
         while not view.is_finished():
                 await asyncio.sleep(1)
             
-            
+        database = database_class(self.bot)
         fragen = await database.find_questions()
         if fragen:
-            for frage in fragen:
-                    
+            for frage in fragen:       
                 question_embed = dc.Embed(title=frage[1], description="Bitte gebt sendet eure Antworten ein.\n Ihr habt **3 Minuten** zeit die Frage zu beantworten", color=0x0099E1)
                 await self.bot.invite_channel.send(embed=question_embed)
 
         else:
-            await self.bot.invite_channel.send("Keine Fragen für das quiz gefunden.")
+            embed_1 = dc.Embed(title="Keine Fragen gefunden", description="Es wurden keine Fragen gefunden, die den ausgewählten Kriterien entsprechen. Bitte startet das Quiz erneut und wählt andere Kriterien aus.\n", color=0xF93A2F)
+            await self.bot.invite_channel.send(embed=embed_1)
 
 async def create_quiz_channel(self, guild : dc.Guild, user : dc.Member, author : dc.Member, overwrites = None):
 
@@ -65,8 +64,7 @@ async def create_quiz_channel(self, guild : dc.Guild, user : dc.Member, author :
 
 class Dropdown_Kategorie(dc.ui.Select):
     
-    def __init__(self, user: dc.Member, author: dc.Member):
-        global _disabled
+    def __init__(self, user: dc.Member, author: dc.Member, bot):
         options = [
             dc.SelectOption(label="Alles", value="any"),
             dc.SelectOption(label="Allgemeinwissen", value="Allgemeinwissen"),
@@ -78,9 +76,10 @@ class Dropdown_Kategorie(dc.ui.Select):
             dc.SelectOption(label="Wissenschaft", value="Wissenschaft"),
             dc.SelectOption(label="Technologie", value="Technologie"),
         ]
-        super().__init__(placeholder="Wähle das Thema:", options=options, min_values=1, max_values=8, disabled=_disabled)
+        super().__init__(placeholder="Wähle das Thema:", options=options, min_values=1, max_values=8)
         self.user = user
         self.author = author
+        self.bot = bot
 
     async def callback(self, interaction: dc.Interaction):
         global string
@@ -129,22 +128,24 @@ class Dropdown_Kategorie(dc.ui.Select):
             string = string[:-2] 
             string_of_kategories = "".join(list_of_kategories)
             string_of_kategories = string_of_kategories[:-2]
+            self.bot.choosen_kategories = string_of_kategories
         await interaction.response.defer() 
        # embed_callback = dc.Embed(title="Themenfeld ausgewählt", description=f"{self.user.mention} hat {string} als Themenfeld ausgewählt.\n {self.author.mention}", color=0x0099E1)
         #await interaction.response.send_message(embed=embed_callback)
 
 
 class Dropdown_Schwierigkeit(dc.ui.Select):
-    def __init__(self, user: dc.Member, author: dc.Member):
+    def __init__(self, user: dc.Member, author: dc.Member, bot):
         global _disabled
         options = [
             dc.SelectOption(label="Einfach", value="leicht"),
             dc.SelectOption(label="Normal", value="mittel"),
             dc.SelectOption(label="Schwer", value="schwer"),
         ]
-        super().__init__(placeholder="Wähle die Schwierigkeit:", options=options, min_values=1, max_values=3, disabled=_disabled)
+        super().__init__(placeholder="Wähle die Schwierigkeit:", options=options, min_values=1, max_values=3)
         self.user = user
         self.author = author
+        self.bot = bot
 
     async def callback(self, interaction: dc.Interaction):
         global string1
@@ -169,36 +170,40 @@ class Dropdown_Schwierigkeit(dc.ui.Select):
         string1 = string1[:-2]
         string_of_difficulties = "".join(list_of_difficulties)
         string_of_difficulties = string_of_difficulties[:-2]
+        self.bot.choosen_difficulties = string_of_difficulties
         await interaction.response.defer() 
         #await interaction.response.send_message(f"{self.user.mention} hat {string1} als Schwierigkeit ausgewählt.\n {self.author.mention}")
 
 class Dropdown_Anzahl_Fragen(dc.ui.Select):
-    def __init__(self, user: dc.Member, author: dc.Member):
+    def __init__(self, user: dc.Member, author: dc.Member, bot):
         global _disabled
         options = [
             dc.SelectOption(label=str(i), value=str(i)) for i in range(1, 26)
             ]
         
-        super().__init__(placeholder="Wähle die Anzahl der Fragen:", options=options, min_values=1, max_values=1, disabled=_disabled)
+        super().__init__(placeholder="Wähle die Anzahl der Fragen:", options=options, min_values=1, max_values=1)
         self.user = user
         self.author = author
+        self.bot = bot
 
     async def callback(self, interaction: dc.Interaction):
         global anzahlfragen
         anzahlfragen = int(self.values[0])
+        self.bot.anzahlfragen = anzahlfragen
         await interaction.response.defer() 
        # await interaction.response.send_message(f"{self.user.mention} hat {self.values[0]} als Anzahl der Fragen ausgewählt.\n {self.author.mention}")
 
 class Quiz_create_View(dc.ui.View):
 
-    def __init__(self, user: dc.Member, author: dc.Member):
+    def __init__(self, user: dc.Member, author: dc.Member, bot):
         super().__init__(timeout=300)
         self.user = user
         self.author = author
         self.message = None
-        self.add_item(Dropdown_Kategorie(user, author))
-        self.add_item(Dropdown_Schwierigkeit(user, author)) 
-        self.add_item(Dropdown_Anzahl_Fragen(user, author))
+        self.bot = bot
+        self.add_item(Dropdown_Kategorie(user, author, self.bot))
+        self.add_item(Dropdown_Schwierigkeit(user, author, self.bot)) 
+        self.add_item(Dropdown_Anzahl_Fragen(user, author, self.bot))
     
     async def on_timeout(self):
         self.disable_all_items()
@@ -216,12 +221,16 @@ class Quiz_create_View(dc.ui.View):
         global anzahlfragen
         global _disabled
         _disabled = True
-        self.disable_all_items()
-        await self.message.edit(view=self)
-        embed_start = dc.Embed(title="Quiz gestartet", description=f"Das Quiz wird in 10s mit {self.user.mention} und {self.author.mention} gestartet.\n\n **Schwierigkeit**\n{self.author.mention} hat {string1} als Schwierigkeit ausgewählt. \n\n **Themenbereich**\n{self.author.mention} hat {string} als Themenbereich ausgewählt.\n\n **Fragenanzahl** \n {self.author.mention} hat {anzahlfragen} als Fragenanzahl ausgewählt\n", color=0x00D166)
-        await interaction.response.send_message(embed=embed_start)
-        self.stop()
-
+        if self.bot.anzahlfragen != 0 and self.bot.choosen_kategories != "" and self.bot.choosen_difficulties != "":
+            self.disable_all_items()
+            newembed = dc.Embed(title = "Erstelle ein Quiz", description = f"{self.author.mention} und {self.user.mention} stellt euer Quiz zusammen und startet es!\n\n**Schwierigkeit**\n Ihr habt {self.bot.choosen_difficulties} als Schwierigkeit ausgewählt. \n\n **Themenbereich**\n Ihr habt {self.bot.choosen_kategories} als Themenbereich ausgewählt.\n\n **Fragenanzahl** \n Ihr habt {self.bot.anzahlfragen} als Fragenanzahl ausgewählt\n", color = 0x00D166)
+            await self.message.edit(embed=newembed ,view=self)
+            embed_start = dc.Embed(title="Quiz gestartet", description=f"Das Quiz wird in 10s mit {self.user.mention} und {self.author.mention} gestartet.\n", color=0x00D166)
+            await interaction.response.send_message(embed=embed_start)
+            self.stop()
+        else:
+            embed_not_complete = dc.Embed(title="❌ Quiz nicht gestartet ❌", description=f"{self.user.mention} und {self.author.mention} bitte wählt alle Optionen aus, bevor ihr das Quiz startet!\n", color=0xF93A2F)
+            await interaction.response.send_message(embed = embed_not_complete)
 
 async def setup(bot):
     await bot.add_cog(make_channel(bot))
