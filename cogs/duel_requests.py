@@ -1,13 +1,13 @@
 import discord as dc
 from discord.ext import commands
-from cogs import make_channel
+from cogs.make_channel import make_channel as make_channel_class
 
 
 class duel_requests(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
      
-    async def duel_request1(self, msg, user: dc.Member):
+    async def duel_request(self, msg, user: dc.Member):
         embed_succesfull = dc.Embed(title = "Anfrage wurde verschickt", description = f"Eine Quiz Anfrage wurde an {user.mention} gesendet.\n", color = 0x00D166)
         embed_succesfull.set_author(name = user.display_name, icon_url = user.avatar.url)
 
@@ -27,7 +27,7 @@ class duel_requests(commands.Cog):
             ), color = 0x0099E1)
             embed.set_author(name=msg.author.display_name, icon_url=msg.author.avatar.url)
 
-            view = Anfrage_View(msg, user)
+            view = Anfrage_View(msg, user, self.bot)
             try:
                 sent_message = await user.send(embed=embed, view=view)
             except dc.Forbidden:
@@ -42,12 +42,13 @@ class duel_requests(commands.Cog):
 
 class Anfrage_View(dc.ui.View): 
 
-    def __init__(self, msg, user: dc.Member): 
+    def __init__(self, msg, user: dc.Member, bot): 
         super().__init__(timeout=120)
         self.message = None
         self.msg = msg
         self.user = user
         self.completed = False
+        self.bot = bot
 
     async def on_timeout(self):
         if self.completed:
@@ -62,7 +63,7 @@ class Anfrage_View(dc.ui.View):
         embed_timeout.set_author(name=self.msg.author.display_name, icon_url=self.msg.author.avatar.url)
         await self.message.edit(embed=embed_timeout, view = self)
         await self.user.send(f"🕒 Die Zeit ist abgelaufen {self.user.mention}, falls du doch spielen willst schicke eine neue Anfrage!", reference = self.message)
-        await response(self.msg.author, self.user, 2)
+        await response(self.bot, self.msg.author, self.user, 2)
         
 
     @dc.ui.button(label="Akzeptieren", style = dc.ButtonStyle.green)
@@ -71,7 +72,7 @@ class Anfrage_View(dc.ui.View):
         self.disable_all_items()
         await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!")
         await self.message.edit(view=self)
-        await response(self.msg.author, interaction.user, 0)
+        await response(self.bot, self.msg.author, self.user, 0)
         self.stop()
     
     @dc.ui.button(label="Ablehnen", style = dc.ButtonStyle.red)
@@ -80,10 +81,10 @@ class Anfrage_View(dc.ui.View):
         self.disable_all_items()
         await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!")
         await self.message.edit(view=self)
-        await response(self.msg.author, interaction.user, 1)
+        await response(self.bot, self.msg.author, self.user, 1)
         self.stop()
 
-async def response(author: dc.Member, user: dc.Member, angenommen): 
+async def response(bot, author: dc.Member, user: dc.Member, angenommen): 
         
         embed_reject = dc.Embed(title = "❌ Anfrage abgelehnt ❌", description = (f"{user.mention} hat die Anfrage abgelehnt.\n"), color = 0xF93A2F)
         embed_reject.set_author(name=user.display_name, icon_url= user.avatar.url)
@@ -98,7 +99,8 @@ async def response(author: dc.Member, user: dc.Member, angenommen):
 
         if angenommen == 0:
             await author.send(embed = embed_accept)
-            await make_channel.make_channel(author, user)  
+            class_of_make_channel = make_channel_class(bot)
+            await class_of_make_channel.make_channel_def(author, user)  
             return
             
         elif angenommen == 1: 
