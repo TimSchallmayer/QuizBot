@@ -1,6 +1,7 @@
 import discord as dc
 from discord.ext import commands
 from cogs.database import Database as database_class
+from cogs.check_questions import check_questions as check_questions_class
 import asyncio
 
 string = ""
@@ -23,8 +24,9 @@ class make_channel(commands.Cog):
 
         overwrites = {
             self.bot.inviteguild.default_role: dc.PermissionOverwrite(view_channel=False),  
-            author: dc.PermissionOverwrite(view_channel=True),
-            user: dc.PermissionOverwrite(view_channel=True) 
+            author: dc.PermissionOverwrite(view_channel=True, send_messages= self.bot.send_message_allowed, read_messages=True),
+            user: dc.PermissionOverwrite(view_channel=True, send_messages= self.bot.send_message_allowed, read_messages=True) 
+
             }
             
         await create_quiz_channel(self, self.bot.inviteguild, user, author, overwrites = overwrites) 
@@ -42,13 +44,31 @@ class make_channel(commands.Cog):
 
         while not view.is_finished():
                 await asyncio.sleep(1)
-            
+        
+        view_skip = Quiz_skip_View(self.bot)
         database = database_class(self.bot)
         fragen = await database.find_questions()
         if fragen:
             for frage in fragen:       
-                question_embed = dc.Embed(title=frage[1], description="Bitte gebt sendet eure Antworten ein.\n Ihr habt **3 Minuten** zeit die Frage zu beantworten", color=0x0099E1)
-                await self.bot.invite_channel.send(embed=question_embed)
+                question_embed = dc.Embed(title=frage[1], description=f"Bitte gebt sendet eure Antworten ein.\n Wer die Frage als erstes beantwortet hat gewonnen", color=0x0099E1)
+                view_skip = Quiz_skip_View(self.bot)
+                await self.bot.invite_channel.send(embed=question_embed, view=view_skip) 
+                
+                check_question_cog = check_questions_class(self.bot, frage[2], self.bot.invite_channel)
+                self.bot.add_cog(check_question_cog)
+
+                self.bot.send_message_allowed = True
+
+                while self.bot.send_message_allowed and not view_skip.is_finished():
+                    await asyncio.sleep(1)
+
+                self.bot.send_message_allowed = False
+                self.bot.remove_cog(check_question_cog.__cog_name__)
+                view_skip.stop()
+
+                await asyncio.sleep(2)
+                continue
+
 
         else:
             embed_1 = dc.Embed(title="Keine Fragen gefunden", description="Es wurden keine Fragen gefunden, die den ausgewählten Kriterien entsprechen. Bitte startet das Quiz erneut und wählt andere Kriterien aus.\n", color=0xF93A2F)
@@ -60,6 +80,20 @@ async def create_quiz_channel(self, guild : dc.Guild, user : dc.Member, author :
     self.bot.invitelink = await channel.create_invite(max_uses = 2, unique = True)
     invite_channel = channel
     self.bot.invite_channel = invite_channel
+
+class Quiz_skip_View(dc.ui.View):
+    def __init__(self, bot):
+        super().__init__(timeout=None)
+        self.bot = bot
+
+    @dc.ui.button(label="Frage überspringen", style=dc.ButtonStyle.blurple)
+    async def button_skip_question_callback(self, button, interaction):
+        self.bot.send_message_allowed = False
+        embed_skip = dc.Embed(title="Frage übersprungen", description="Die Frage wird übersprungen.", color=0xF93A2F)
+        await interaction.response.send_message(embed=embed_skip)
+        self.disable_all_items()
+        await interaction.message.edit(view=self)
+        self.stop()
 
 
 class Dropdown_Kategorie(dc.ui.Select):
