@@ -32,6 +32,7 @@ string_of_kategories = ""
 string_of_difficulties = ""
 answer = ""
 antwort = {}
+send_message_allowed = False
 
 """
 class Quiz_Modal(dc.ui.Modal):
@@ -81,7 +82,7 @@ async def duel(msg, user: dc.Member):
 
 
 for filename in os.listdir('./cogs'):
-    if filename.endswith('.py'):
+    if filename.endswith('.py') and filename != 'check_questions.py':
         bot.load_extension(f'cogs.{filename[:-3]}')
 
 
@@ -91,6 +92,7 @@ bot.choosen_kategories = string_of_kategories
 bot.choosen_difficulties = string_of_difficulties
 bot.anzahlfragen = anzahlfragen
 bot.invitelink = invitelink
+bot.send_message_allowed = send_message_allowed
 
 
 bot.run(Token)
