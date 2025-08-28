@@ -24,11 +24,13 @@ class Database(commands.Cog):
 
         sql_query = f"""SELECT * FROM FRAGEN 
                 WHERE KATERGORIE IN ({self.bot.choosen_kategories}) AND DIFFICULTY IN ({self.bot.choosen_difficulties}) 
-                ORDER BY RAND();"""
+                ORDER BY RAND()
+                LIMIT {anzahlfragen}
+                ;"""
 
         cursor.execute(sql_query)
 
-        rows = cursor.fetchmany(anzahlfragen)
+        rows = cursor.fetchall()
         return rows
 
 
