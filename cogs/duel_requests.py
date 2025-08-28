@@ -99,8 +99,9 @@ async def response(bot, author: dc.Member, user: dc.Member, angenommen):
 
         if angenommen == 0:
             await author.send(embed = embed_accept)
+            channel = None
             class_of_make_channel = make_channel_class(bot)
-            await class_of_make_channel.make_channel_def(author, user)  
+            await class_of_make_channel.make_channel_def(author, user, 0, channel)  
             return
             
         elif angenommen == 1: 
