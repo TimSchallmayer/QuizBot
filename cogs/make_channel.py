@@ -1,20 +1,10 @@
 import discord as dc
 from discord.ext import commands
 from cogs.database import Database as database_class
-from cogs.check_questions import check_questions as check_questions_class
+from cogs.Quiz import Quiz as quiz_class
 import asyncio
 
-string = ""
-string_list = []
-string1 = ""
-string1_list = []
-anzahlfragen = 0
-list_of_kategories = []
-list_of_difficulties = []
-string_of_kategories = ""
-string_of_difficulties = ""
-answer = ""
-antwort = {}
+
 
 class make_channel(commands.Cog):
     def __init__(self, bot):
@@ -25,8 +15,8 @@ class make_channel(commands.Cog):
 
         overwrites = {
             self.bot.inviteguild.default_role: dc.PermissionOverwrite(view_channel=False),  
-            author: dc.PermissionOverwrite(view_channel=True, send_messages= self.bot.send_message_allowed, read_messages=True),
-            user: dc.PermissionOverwrite(view_channel=True, send_messages= self.bot.send_message_allowed, read_messages=True) 
+            author: dc.PermissionOverwrite(view_channel=True, send_messages= True, read_messages=True),
+            user: dc.PermissionOverwrite(view_channel=True, send_messages= True, read_messages=True) 
 
             }
             
@@ -54,43 +44,8 @@ class make_channel(commands.Cog):
         self.bot.choosen_difficulties = ""
         self.bot.anzahlfragen = 0
 
-        if fragen:
-            for frage in fragen:   
-                global string_dificulty 
-                string_dificulty = "" 
-                if frage[3] == "EASY":
-                    string_dificulty = "Einfach"
-                if frage[3] == "MEDIUM":
-                    string_dificulty = "Normal"
-                if frage[3] == "HARD":
-                    string_dificulty = "Schwer"  
-                question_embed = dc.Embed(title=frage[1], description=f"Schwierigkeit: {string_dificulty} \n Kategorie: {frage[4]}\n\nBitte gebt sendet eure Antworten ein.\n", color=0x0099E1)
-                view_skip = Quiz_skip_View(self.bot, frage, user, author)
-                await self.bot.invite_channel.send(embed=question_embed, view=view_skip) 
-                
-                check_question_cog = check_questions_class(self.bot, frage[2], self.bot.invite_channel, user, author)
-                self.bot.add_cog(check_question_cog)
-
-                self.bot.send_message_allowed = True
-
-                while self.bot.send_message_allowed and not view_skip.is_finished():
-                    await asyncio.sleep(1)
-
-                self.bot.send_message_allowed = False
-                self.bot.remove_cog(check_question_cog.__cog_name__)
-                view_skip.stop()
-
-                await asyncio.sleep(2)
-                continue
-            view_end = Quiz_restart_View(self.bot, user, author)
-            embed_end = dc.Embed(title="Quiz beendet", description=f"Das Quiz ist nun beendet. Vielen Dank fürs Mitmachen {author.mention} und {user.mention}!\n\nIhr könnt den Kanal nun verlassen oder ein neues Quiz starten.\nDieser Kanal wird in 2 Minuten gelöscht", color=0x0099E1)
-            await self.bot.invite_channel.send(embed=embed_end, view = view_end)
-
-
-        else:
-            view_end = Quiz_restart_View(self.bot, user, author)
-            embed_1 = dc.Embed(title="Keine Fragen gefunden", description="Es wurden keine Fragen gefunden, die den ausgewählten Kriterien entsprechen. Bitte startet das Quiz erneut und wählt andere Kriterien aus.\n", color=0xF93A2F)
-            await self.bot.invite_channel.send(embed=embed_1, view = view_end)
+        quiz_class_variable = quiz_class(self.bot, fragen, user, author, )
+        await quiz_class_variable.quiz()
 
 async def create_quiz_channel(self, guild : dc.Guild, user : dc.Member, author : dc.Member, overwrites = None):
 
@@ -98,47 +53,6 @@ async def create_quiz_channel(self, guild : dc.Guild, user : dc.Member, author :
     self.bot.invitelink = await channel.create_invite(max_uses = 2, unique = True)
     invite_channel = channel
     self.bot.invite_channel = invite_channel
-
-class Quiz_restart_View(dc.ui.View):
-    def __init__(self, bot, user : dc.Member, author : dc.Member):
-        super().__init__(timeout=120)
-        self.bot = bot
-        self.user = user
-        self.author = author
-    
-
-    async def on_timeout(self):
-        self.disable_all_items()
-        await self.message.edit(view=self)
-        await self.bot.invite_channel.delete()
-        self.stop()
-
-    @dc.ui.button(label="Neues Quiz starten", style=dc.ButtonStyle.green)
-    async def button_restart_quiz_callback(self, button, interaction : dc.Interaction):
-        self.bot.send_message_allowed = False
-        await make_channel.make_channel_def(self, self.author, self.user, 1, self.bot.invite_channel)
-        self.disable_all_items()
-        await interaction.message.edit(view=self)
-        await interaction.response.defer()
-        self.stop()
-
-
-class Quiz_skip_View(dc.ui.View):
-    def __init__(self, bot, frage, user : dc.Member, author : dc.Member):
-        super().__init__(timeout=None)
-        self.bot = bot
-        self.frage = frage
-        self.user = user
-        self.author = author
-
-    @dc.ui.button(label="Frage überspringen", style=dc.ButtonStyle.blurple)
-    async def button_skip_question_callback(self, button, interaction):
-        self.bot.send_message_allowed = False
-        embed_skip = dc.Embed(title="Frage übersprungen", description=f"Die Frage wird übersprungen.\n Die Richtige Antwort lautet: {self.frage[2]}\n\n **Aktueller Punktestand**\n {self.author.mention}:  \n {self.user.mention}:  \n", color=0xF93A2F)
-        await interaction.response.send_message(embed=embed_skip)
-        self.disable_all_items()
-        await interaction.message.edit(view=self)
-        self.stop()
 
 
 class Dropdown_Kategorie(dc.ui.Select):
@@ -161,10 +75,10 @@ class Dropdown_Kategorie(dc.ui.Select):
         self.bot = bot
 
     async def callback(self, interaction: dc.Interaction):
-        global string
-        global string_list
-        global list_of_kategories
-        global string_of_kategories
+        string = ""
+        string_list = []
+        list_of_kategories = []
+        string_of_kategories = ""
 
         if "any" in self.values:
             string = "Allgemeinwissen, Geschichte, Geographie, Mathe, Literatur, Moderne, Wissenschaft, Technologie"
@@ -212,7 +126,7 @@ class Dropdown_Kategorie(dc.ui.Select):
         await interaction.response.defer() 
        # embed_callback = dc.Embed(title="Themenfeld ausgewählt", description=f"{self.user.mention} hat {string} als Themenfeld ausgewählt.\n {self.author.mention}", color=0x0099E1)
         #await interaction.response.send_message(embed=embed_callback)
-
+        self.values.clear() 
 
 class Dropdown_Schwierigkeit(dc.ui.Select):
     def __init__(self, user: dc.Member, author: dc.Member, bot):
@@ -228,10 +142,10 @@ class Dropdown_Schwierigkeit(dc.ui.Select):
         self.bot = bot
 
     async def callback(self, interaction: dc.Interaction):
-        global string1
-        global string1_list
-        global list_of_difficulties
-        global string_of_difficulties
+        string_of_difficulties = ""
+        list_of_difficulties = []
+        string1 = ""
+        string1_list = []
         
         for value in self.values:
                 if value == "leicht":
@@ -254,6 +168,7 @@ class Dropdown_Schwierigkeit(dc.ui.Select):
         self.bot.choosen_difficulties = string_of_difficulties
         await interaction.response.defer() 
         #await interaction.response.send_message(f"{self.user.mention} hat {string1} als Schwierigkeit ausgewählt.\n {self.author.mention}")
+        self.values.clear() 
 
 class Dropdown_Anzahl_Fragen(dc.ui.Select):
     def __init__(self, user: dc.Member, author: dc.Member, bot):
@@ -267,12 +182,13 @@ class Dropdown_Anzahl_Fragen(dc.ui.Select):
         self.author = author
         self.bot = bot
 
-    async def callback(self, interaction: dc.Interaction):
-        global anzahlfragen
+    async def callback(self, interaction: dc.Interaction):      
+        anzahlfragen = 0
         anzahlfragen = int(self.values[0])
         self.bot.anzahlfragen = anzahlfragen
         await interaction.response.defer() 
        # await interaction.response.send_message(f"{self.user.mention} hat {self.values[0]} als Anzahl der Fragen ausgewählt.\n {self.author.mention}")
+        self.values.clear() 
 
 class Quiz_create_View(dc.ui.View):
 
@@ -293,7 +209,7 @@ class Quiz_create_View(dc.ui.View):
             embed_timeout = dc.Embed(title="🕒 Quiz Erstellung abgelaufen", description = f"Die Zeit, zum erstellen des Quizes ist abgelaufen, bitte startet das Quiz erneut.\n {self.user.mention} {self.author.mention}", color = 0x0099E1)
 
             await self.message.edit(view=self)
-            await self.message.channel.send(embed=embed_timeout, view=self)
+            await self.message.channel.send(embed=embed_timeout)
 
     @dc.ui.button(label="Quiz starten", style=dc.ButtonStyle.green)
     async def button_start_quiz_callback(self, button, interaction):
