@@ -5,6 +5,7 @@ import os
 from dotenv import load_dotenv # type: ignore
 import asyncio
 from cogs.duel_requests import duel_requests as duel_requests_class
+from cogs.database_punkte import Punkte as punkte_class
 #import logging
 #logging.basicConfig(level=logging.DEBUG)
 
@@ -80,12 +81,29 @@ async def duel(msg, user: dc.Member):
     class_of_duel_requests = duel_requests_class(bot)
     await class_of_duel_requests.duel_request(msg, user)
 
+@bot.slash_command()
+async def leaderboard(ctx, rang : int):
+    string_leader = ""
+    punkt = punkte_class(bot)
+    leaderboard = await punkt.get_leaderboard(rang)
+    for users in leaderboard:
+        user = bot.get_user(users[0])
+        if user is None:
+            user = await bot.fetch_user(users[0])
+        string_leader += f"{user.mention} - {users[1]} Punkte\n"
+    embed = dc.Embed(title=f"🏆 Top {rang} Spieler 🏆", description=string, color=0xFFD500)
+    await ctx.send(embed=embed, ephemeral=True)
+
+@bot.slash_command()
+@commands.has_permissions(administrator=True)
+async def remove(ctx, user : dc.Member):
+    punkt = punkte_class(bot)
+    await punkt.remove_user(user)
+    await ctx.send(f"{user.mention} wurde entfernt.")
 
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py') and filename != 'check_questions.py':
         bot.load_extension(f'cogs.{filename[:-3]}')
-
-
 #bot.load_extension('cogs.duel_requests')
 
 bot.choosen_kategories = string_of_kategories
