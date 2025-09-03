@@ -6,6 +6,7 @@ from dotenv import load_dotenv # type: ignore
 import asyncio
 from cogs.duel_requests import duel_requests as duel_requests_class
 from cogs.database_punkte import Punkte as punkte_class
+from discord import Option, SlashCommandOptionType
 #import logging
 #logging.basicConfig(level=logging.DEBUG)
 
@@ -77,22 +78,25 @@ class Quiz_Modal(dc.ui.Modal):
 
 @bot.slash_command()
 async def duel(msg, user: dc.Member):
-    
+    #if msg.author == user:
+       # return
     class_of_duel_requests = duel_requests_class(bot)
     await class_of_duel_requests.duel_request(msg, user)
 
 @bot.slash_command(guild_ids=[1157386757684338808])
-async def leaderboard(msg, rang : int):
+async def leaderboard(msg, rang : Option(SlashCommandOptionType.integer, min_value = 1, max_value = 50)): # type: ignore
     string_leader = ""
     punkt = punkte_class(bot)
     leaderboard = await punkt.get_leaderboard(rang)
+    i = 1
     for users in leaderboard:
         user = bot.get_user(users[0])
         if user is None:
             user = await bot.fetch_user(users[0])
-        string_leader += f"{user.mention} - {users[1]} Punkte\n"
+        string_leader += f"{i}. {user.mention} - {users[1]} Punkte\n"
     embed = dc.Embed(title=f"🏆 Top {rang} Spieler 🏆", description=string_leader, color=0xFFD500)
     await msg.respond(embed=embed, ephemeral=True)
+    i+=1
 
 @bot.slash_command(guild_ids=[1157386757684338808])
 @commands.has_permissions(administrator=True)
