@@ -23,7 +23,7 @@ class make_channel(commands.Cog):
             
         await create_quiz_channel(self, self.bot.inviteguild, user, author, overwrites = overwrites) 
 
-        embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"{self.bot.invitelink}\n", color = 0x0099E1)  
+        embed_invite = dc.Embed(title = "Joine dem Quizkanal", description = f"[Klicke hier um beizutreten]({self.bot.invitelink})\n", color = 0x0099E1)  
 
         embed_create_quiz = dc.Embed(title = "Erstellt ein Quiz", description = f"** {author.mention} {user.mention} stellt euer Quiz zusammen und startet es!**\n\n Bitte wählt die Anzahl an Fragen, den Themenbereich \nund die Schwierigkeit des Quizes aus.\n", color = 0x0099E1)
         if which_way == 0:
@@ -41,7 +41,7 @@ class make_channel(commands.Cog):
         self.bot.send_messages_allowed = False
         await self.bot.invite_channel.send(embed = embed_create_quiz, view = view)
 
-        while not view.is_finished():
+        while not view.is_finished() and self.bot.success == False:
                 await asyncio.sleep(1)
         
         database = database_class(self.bot)
@@ -59,7 +59,8 @@ class make_channel(commands.Cog):
 async def create_quiz_channel(self, guild : dc.Guild, user : dc.Member, author : dc.Member, overwrites = None):
 
     channel = await guild.create_text_channel(f" Quiz Kanal {user.mention}{author.mention}", overwrites=overwrites)
-    self.bot.invitelink = await channel.create_invite(max_uses = 2, unique = True)
+    link = await channel.create_invite(max_uses = 2, unique = True)
+    self.bot.invitelink = link.url
     invite_channel = channel
     self.bot.invite_channel = invite_channel
 
@@ -207,10 +208,11 @@ class Quiz_create_View(dc.ui.View):
         self.author = author
         self.message = None
         self.bot = bot
+        self.channel = self.bot.invite_channel
         self.add_item(Dropdown_Kategorie(user, author, self.bot))
         self.add_item(Dropdown_Schwierigkeit(user, author, self.bot)) 
         self.add_item(Dropdown_Anzahl_Fragen(user, author, self.bot))
-    
+        self.bot.success = False
     async def on_timeout(self):
         self.disable_all_items()
         if self.message:
@@ -219,6 +221,9 @@ class Quiz_create_View(dc.ui.View):
 
             await self.message.edit(view=self)
             await self.message.channel.send(embed=embed_timeout)
+        
+        await asyncio.sleep(10)
+        await self.channel.delete()
 
     @dc.ui.button(label="Quiz starten", style=dc.ButtonStyle.green)
     async def button_start_quiz_callback(self, button, interaction):
@@ -227,13 +232,16 @@ class Quiz_create_View(dc.ui.View):
         global anzahlfragen
         global _disabled
         _disabled = True
+        
         if self.bot.anzahlfragen != 0 and self.bot.choosen_kategories != "" and self.bot.choosen_difficulties != "":
             self.disable_all_items()
             newembed = dc.Embed(title = "Erstelle ein Quiz", description = f"{self.author.mention} und {self.user.mention} stellt euer Quiz zusammen und startet es!\n\n**Schwierigkeit**\n Ihr habt {self.bot.string_of_difficulties} als Schwierigkeit ausgewählt. \n\n **Themenbereich**\n Ihr habt {self.bot.string_of_kategories} als Themenbereich ausgewählt.\n\n **Fragenanzahl** \n Ihr habt {self.bot.anzahlfragen} als Fragenanzahl ausgewählt\n", color = 0x00D166)
             await self.message.edit(embed=newembed ,view=self)
             embed_start = dc.Embed(title="Quiz gestartet", description=f"Das Quiz wird in ein paar Sekunden mit {self.user.mention} und {self.author.mention} gestartet.\n\n **Regeln**\n Wer als erstes auf die gestellte Frage antwortet gewinnt.", color=0x00D166)
             await interaction.response.send_message(embed=embed_start)
+            self.bot.success = True
             self.stop()
+           
         else:
             embed_not_complete = dc.Embed(title="❌ Quiz nicht gestartet ❌", description=f"{self.user.mention} und {self.author.mention} bitte wählt alle Optionen aus, bevor ihr das Quiz startet!\n", color=0xF93A2F)
             await interaction.response.send_message(embed = embed_not_complete)
