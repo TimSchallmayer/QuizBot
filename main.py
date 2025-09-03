@@ -81,8 +81,8 @@ async def duel(msg, user: dc.Member):
     class_of_duel_requests = duel_requests_class(bot)
     await class_of_duel_requests.duel_request(msg, user)
 
-@bot.slash_command()
-async def leaderboard(ctx, rang : int):
+@bot.slash_command(guild_ids=[1157386757684338808])
+async def leaderboard(msg, rang : int):
     string_leader = ""
     punkt = punkte_class(bot)
     leaderboard = await punkt.get_leaderboard(rang)
@@ -91,15 +91,20 @@ async def leaderboard(ctx, rang : int):
         if user is None:
             user = await bot.fetch_user(users[0])
         string_leader += f"{user.mention} - {users[1]} Punkte\n"
-    embed = dc.Embed(title=f"🏆 Top {rang} Spieler 🏆", description=string, color=0xFFD500)
-    await ctx.send(embed=embed, ephemeral=True)
+    embed = dc.Embed(title=f"🏆 Top {rang} Spieler 🏆", description=string_leader, color=0xFFD500)
+    await msg.respond(embed=embed, ephemeral=True)
 
-@bot.slash_command()
+@bot.slash_command(guild_ids=[1157386757684338808])
 @commands.has_permissions(administrator=True)
 async def remove(ctx, user : dc.Member):
     punkt = punkte_class(bot)
     await punkt.remove_user(user)
-    await ctx.send(f"{user.mention} wurde entfernt.")
+    await ctx.respond(f"{user.mention} wurde entfernt.", ephemeral=True)
+
+@remove.error
+async def remove_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
+        await ctx.respond("Nur Admins dürfen diesen Befehl nutzen ❌", ephemeral=True)
 
 for filename in os.listdir('./cogs'):
     if filename.endswith('.py') and filename != 'check_questions.py':
@@ -112,5 +117,9 @@ bot.anzahlfragen = anzahlfragen
 bot.invitelink = invitelink
 bot.send_message_allowed = send_message_allowed
 
+@bot.event
+async def on_ready():
+    await bot.sync_commands()
+    print(f"Eingeloggt als {bot.user}")
 
 bot.run(Token)
