@@ -17,6 +17,7 @@ class Quiz(commands.Cog):
         self.make_channel_class = make_channel_class(self.bot)
 
     async def quiz(self):
+
         fragen = self.fragen
         user = self.user
         author = self.author
@@ -31,16 +32,20 @@ class Quiz(commands.Cog):
                 if frage[3] == "MEDIUM":
                     string_dificulty = "Normal"
                 if frage[3] == "HARD":
-                    string_dificulty = "Schwer"  
-                question_embed = dc.Embed(title=frage[1], description=f"Schwierigkeit: {string_dificulty} \n Kategorie: {frage[4]}\n\nBitte gebt sendet eure Antworten ein.\n", color=0x0099E1)
-                view_skip = Quiz_skip_View(self.bot, frage, user, author)
-                await self.bot.invite_channel.send(embed=question_embed, view=view_skip) 
-                
+                    string_dificulty = "Schwer"
+
                 if self.bot.get_cog("check_questions"):
                     self.bot.remove_cog("check_questions")
 
                 check_question_cog = check_questions_class(self.bot, frage[2], self.bot.invite_channel, user, author, frage[3])
                 self.bot.add_cog(check_question_cog)
+
+                question_embed = dc.Embed(title=frage[1], description=f"Schwierigkeit: {string_dificulty} \n Kategorie: {frage[4]}\n\nBitte gebt sendet eure Antworten ein.\n", color=0x0099E1)
+                view_skip = Quiz_skip_View(self.bot, frage, user, author)
+                await self.bot.invite_channel.send(embed=question_embed, view=view_skip) 
+                
+                
+
 
                 self.bot.send_message_allowed = True
 
@@ -48,7 +53,6 @@ class Quiz(commands.Cog):
                     await asyncio.sleep(1)
 
                 self.bot.send_message_allowed = False
-                self.bot.remove_cog("check_questions")
                 view_skip.stop()
 
                 await asyncio.sleep(2)
@@ -63,6 +67,7 @@ class Quiz(commands.Cog):
 
             embed_end = dc.Embed(title=f"{winner_string}", description=f"Das Quiz ist nun beendet. Vielen Dank fürs Mitmachen {author.mention} und {user.mention}!\n\nIhr könnt den Kanal nun verlassen oder ein neues Quiz starten.\nDieser Kanal wird in 2 Minuten gelöscht", color=0x0099E1)
             await self.bot.invite_channel.send(embed=embed_end, view = view_end)
+            await view_end.wait()
 
             punkte = punkte_class(self.bot)
             if await punkte.does_user_exist(author) == False:
@@ -101,7 +106,8 @@ class Quiz(commands.Cog):
             view_end = Quiz_restart_View(self.bot, user, author, self.make_channel_class)
             embed_1 = dc.Embed(title="Keine Fragen gefunden", description="Es wurden keine Fragen gefunden, die den ausgewählten Kriterien entsprechen. Bitte startet das Quiz erneut und wählt andere Kriterien aus.\n", color=0xF93A2F)
             await self.bot.invite_channel.send(embed=embed_1, view = view_end)
-
+            await view_end.wait()
+        self.bot.remove_cog("check_questions")
 
 class Quiz_restart_View(dc.ui.View):
     def __init__(self, bot, user : dc.Member, author : dc.Member, make_channel):
@@ -142,12 +148,12 @@ class Quiz_skip_View(dc.ui.View):
         self.author = author
 
     @dc.ui.button(label="Frage überspringen", style=dc.ButtonStyle.blurple)
-    async def button_skip_question_callback(self, button, interaction):
-        self.bot.send_message_allowed = False
+    async def button_skip_question_callback(self, button, interaction):  
         embed_skip = dc.Embed(title="Frage übersprungen", description=f"Die Frage wird übersprungen.\n Die Richtige Antwort lautet: {self.frage[2]}\n\n **Aktueller Punktestand**\n {self.author.mention}:  {self.bot.points_author} \n {self.user.mention}: {self.bot.points_user} \n", color=0xF93A2F)
         await interaction.response.send_message(embed=embed_skip)
         self.disable_all_items()
         await interaction.message.edit(view=self)
+        self.bot.send_message_allowed = False
         self.stop()
 
 
