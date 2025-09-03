@@ -3,6 +3,7 @@ from discord.ext import commands
 from cogs.database import Database as database_class
 from cogs.Quiz import Quiz as quiz_class
 import asyncio
+from cogs.check_questions import check_questions as check_questions_class
 
 
 
@@ -30,9 +31,14 @@ class make_channel(commands.Cog):
             await user.send(embed =embed_invite)
         else:
             await channel.send(embed=embed_invite)
+        if self.bot.get_cog("check_questions"):
+                    self.bot.remove_cog("check_questions")
 
+        check_question_cog = check_questions_class(self.bot, "", self.bot.invite_channel, user, author, "")
+        self.bot.add_cog(check_question_cog)
+                    
         view = Quiz_create_View(user, author, self.bot)
-        
+        self.bot.send_messages_allowed = False
         await self.bot.invite_channel.send(embed = embed_create_quiz, view = view)
 
         while not view.is_finished():
@@ -46,6 +52,9 @@ class make_channel(commands.Cog):
 
         quiz_class_variable = quiz_class(self.bot, fragen, user, author, )
         await quiz_class_variable.quiz()
+
+        self.bot.remove_cog("check_questions")
+
 
 async def create_quiz_channel(self, guild : dc.Guild, user : dc.Member, author : dc.Member, overwrites = None):
 
