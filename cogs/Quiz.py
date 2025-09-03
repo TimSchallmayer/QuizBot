@@ -146,15 +146,26 @@ class Quiz_skip_View(dc.ui.View):
         self.frage = frage
         self.user = user
         self.author = author
+        self.bestäitgt = set()
 
     @dc.ui.button(label="Frage überspringen", style=dc.ButtonStyle.blurple)
     async def button_skip_question_callback(self, button, interaction):  
-        embed_skip = dc.Embed(title="Frage übersprungen", description=f"Die Frage wird übersprungen.\n Die Richtige Antwort lautet: {self.frage[2]}\n\n **Aktueller Punktestand**\n {self.author.mention}:  {self.bot.points_author} \n {self.user.mention}: {self.bot.points_user} \n", color=0xF93A2F)
-        await interaction.response.send_message(embed=embed_skip)
-        self.disable_all_items()
-        await interaction.message.edit(view=self)
-        self.bot.send_message_allowed = False
-        self.stop()
+        if interaction.user.id in self.bestäitgt:
+            return
+        elif interaction.user.id not in self.bestäitgt:               
+            self.bestäitgt.add(interaction.user.id)
+
+        elif len(self.bestäitgt) == 2:
+            embed_skip = dc.Embed(title="Frage übersprungen", description=f"Die Frage wird übersprungen.\n Die Richtige Antwort lautet: {self.frage[2]}\n\n **Aktueller Punktestand**\n {self.author.mention}:  {self.bot.points_author} \n {self.user.mention}: {self.bot.points_user} \n", color=0xF93A2F)
+            await interaction.response.send_message(embed=embed_skip)
+            self.disable_all_items()
+            await interaction.message.edit(view=self)
+            self.bot.send_message_allowed = False
+            self.stop()
+     
+
+
+        
 
 
 async def setup(bot):
