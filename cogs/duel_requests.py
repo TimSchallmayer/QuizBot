@@ -43,7 +43,7 @@ class duel_requests(commands.Cog):
 class Anfrage_View(dc.ui.View): 
 
     def __init__(self, msg, user: dc.Member, bot): 
-        super().__init__(timeout=120)
+        super().__init__(timeout=20)
         self.message = None
         self.msg = msg
         self.user = user
@@ -57,8 +57,7 @@ class Anfrage_View(dc.ui.View):
         embed_timeout = dc.Embed(title="📩 Quiz-Einladung",
         description=(
             f"Hey! {self.msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
-            "**Möchtest du an dem Quiz teilnehmen?** 🎉\n"
-            "Du hast 2 Minuten Zeit, dich zu entscheiden.\n"
+            " 🕒**Du hast nicht auf die Quiz Anfrage reagiert** 🕒\n"
         ), color = 0x597E8D)
         embed_timeout.set_author(name=self.msg.author.display_name, icon_url=self.msg.author.avatar.url)
         await self.message.edit(embed=embed_timeout, view = self)
@@ -70,7 +69,13 @@ class Anfrage_View(dc.ui.View):
     async def button_accept_callback(self, button, interaction):
         self.completed = True
         self.disable_all_items()
-        await interaction.response.send_message("🎉 Du hast das Quiz akzeptiert!")
+        embed_accept = dc.Embed(title="📩 Quiz-Einladung",
+            description=(
+                f"Hey! {self.msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
+                "🎉 **Du hast die Quizanfrage akzeptiert!** 🎉\n"
+            ), color = 0x00D166)
+        embed_accept.set_author(name=self.msg.author.display_name, icon_url=self.msg.author.avatar.url)
+        await interaction.response.edit_message(embed=embed_accept, view=self)
         await self.message.edit(view=self)
         await response(self.bot, self.msg.author, self.user, 0)
         self.stop()
@@ -79,7 +84,13 @@ class Anfrage_View(dc.ui.View):
     async def button_reject_callback(self, button, interaction):
 
         self.disable_all_items()
-        await interaction.response.send_message("❌ Du hast das Quiz abgelehnt!")
+        embed_accept = dc.Embed(title="📩 Quiz-Einladung",
+            description=(
+                f"Hey! {self.msg.author.mention} hat dich zu einem Quiz eingeladen!\n\n"
+                "❌ **Du hast die Quizanfrage abgelehnt!** ❌\n"
+            ), color = 0xF93A2F)
+        embed_accept.set_author(name=self.msg.author.display_name, icon_url=self.msg.author.avatar.url)
+        await interaction.response.edit_message(embed=embed_accept, view=self)
         await self.message.edit(view=self)
         await response(self.bot, self.msg.author, self.user, 1)
         self.stop()
@@ -109,7 +120,7 @@ async def response(bot, author: dc.Member, user: dc.Member, angenommen):
             return
 
         else:
-            await author.send(embed = embed_timeout)  
+           # await author.send(embed = embed_timeout)  
             return
 
 
