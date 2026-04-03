@@ -146,16 +146,16 @@ class Quiz_skip_View(dc.ui.View):
         self.frage = frage
         self.user = user
         self.author = author
-        self.bestäitgt = set()
+        self.bestaeitgt = set()
 
     @dc.ui.button(label="Frage überspringen", style=dc.ButtonStyle.blurple)
     async def button_skip_question_callback(self, button, interaction):  
-        if interaction.user.id in self.bestäitgt:
+        if interaction.user.id in self.bestaeitgt:
             return
-        elif interaction.user.id not in self.bestäitgt:               
-            self.bestäitgt.add(interaction.user.id)
+        elif interaction.user.id not in self.bestaeitgt:               
+            self.bestaeitgt.add(interaction.user.id)
 
-        elif len(self.bestäitgt) == 2:
+        elif len(self.bestaeitgt) == 2:
             embed_skip = dc.Embed(title="Frage übersprungen", description=f"Die Frage wird übersprungen.\n Die Richtige Antwort lautet: {self.frage[2]}\n\n **Aktueller Punktestand**\n {self.author.mention}:  {self.bot.points_author} \n {self.user.mention}: {self.bot.points_user} \n", color=0xF93A2F)
             await interaction.response.send_message(embed=embed_skip)
             self.disable_all_items()
